@@ -88,3 +88,4 @@ pnpm --filter @skillconnect/web test
 - Business settings (fees, windows, weights, thresholds) come from the business-config store, never constants.
 - Multi-document and financial writes go through `TransactionRunner`; side effects go through the outbox.
 - Mutations that move money or allocate people require an `Idempotency-Key` header.
+
