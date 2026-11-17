@@ -1,0 +1,12 @@
+{
+  "extends": "@skillconnect/tsconfig/node.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": false,
+    "types": ["node", "jest"],
+    "paths": { "@core/*": ["src/core/*"], "@modules/*": ["src/modules/*"] }
+  },
+  "include": ["src", "test"]
+}
