@@ -1,13 +1,42 @@
-# SkillConnect — Development Plan
+# Bijli Wala — Development Plan
 
 | Field | Value |
 |---|---|
-| Version | 1.0 (Approved 2026-11-13) |
-| Source | docs/SRS.md v1.0, docs/ARCHITECTURE.md v0.1 |
+| Version | 2.0 (Re-planned 2026-11-18 against the Bijli Wala requirement document) |
+| Source | `docs/bijli wala .docx` (primary), docs/SRS.md v2.0, docs/ARCHITECTURE.md v0.2 |
+
+## Approach (requirement document §19)
+The requirement document asks for four things to be approved before development continues:
+1. **UI/UX designs** for all dashboards, registration forms and website pages.
+2. **A database ER diagram** of all tables and their relationships. Here that is the collection model in DATABASE.md, especially §15.
+3. **Workflow diagrams** for employee registration, client booking, manpower deployment and advertising.
+4. **A commercial proposal**: module-wise cost, timeline, hosting, API costs and annual maintenance.
+
+The work is delivered **in phases**, but the database and architecture are designed for the **complete platform from day one**. The v2 collections, scopes and ledger books are already specified in DATABASE §15 and ARCHITECTURE §11, so later modules do not force a rebuild.
+
+**Stack:** the existing React (Vite), NestJS and MongoDB stack is kept, not the document's Next.js and PostgreSQL recommendation (SRS §2.3, ARCHITECTURE T-17).
+
+## Gap analysis vs `bijli wala .docx` (as of 2026-11-18)
+
+| Requirement doc area | Already built (Phases 1–4) | Missing, and the phase that delivers it |
+|---|---|---|
+| §3 Employee registration and dashboard | OTP sign-up, profile, skills, availability, bank, documents, plan and fee payment, verification review | Wizard steps 2–5 fields (qualifications, experience, work preferences, emergency contact), declaration, Employee ID, extended statuses → **5A**. Work, attendance and earnings tabs → 5–7 |
+| §3 Client registration and booking | Company signup and KYC, sites, team, enquiries, quotations (send, revise, accept, reject, PDF), jobs | Extended requirement fields, client revision request and clarification thread → **5A**. Work orders → **5**. Proposed candidate view and daily operations → 5–6 |
+| §3 Advertiser | — | Everything → **8** |
+| §4 Super Admin | Users, custom roles, scoped assignments (platform, company, vendor), audit, settings, templates | Departments, state and city scopes, geography masters, CMS, extended reports → **9–10** |
+| §5 Ad engine | — | Everything → **8** |
+| §6 Manpower operations | Jobs with positions | Matching, invitations, proposals, assignments, double-booking guard, replacements → **5** |
+| §7 Attendance and payroll | — | Attendance and leave → **6**. Payroll → **7** |
+| §8 Payments | Razorpay, webhooks, ledger and refunds for registration fees | Business, advertiser and vendor payments, invoices, reconciliation → **7–8** |
+| §9 Notifications | Templates, in-app inbox, preferences, console adapters | Real SMS, WhatsApp and email providers, web push, new event templates → **5–9** |
+| §10 Website structure | Home, login, become-a-provider, request-a-quote, service pages | CMS-driven pages, Advertise With Us, Register as Vendor, portals for advertisers → **9** |
+| §13 Security | ASVS-style controls, MFA for admins, rate limits, IDOR guards, audit | Geo-scoped access, sensitive permission families → **10**. Full security test → **11** |
+| §16 Acceptance | AC-02, AC-04 built. AC-01, AC-03, AC-05 partial | See SRS §19.3 |
+| §17 Handover | — | **11** |
 
 
 ## Context
-`D:\SkillConnect` is a new project with no git repository. It contains:
+`D:\Bijli Wala` is a new project with no git repository. It contains:
 - `docs/SRS.md` v1.0: the requirements, with the Section 13 defaults accepted.
 - `docs/ARCHITECTURE.md` v0.1: the proposed architecture. It covers the modular monolith (api and worker processes), the module map, the core infrastructure, the allocation concurrency design (§6.3), the payment flows (§6.5), the outbox, RBAC, the frontend structure, and the technical decisions T-01 to T-16.
 
@@ -26,7 +55,15 @@ There is no existing code to reuse. Everything below is new, and every module us
 | 2 Identity, access, platform | ✅ Done (2026-11-13) | See "Phase 2 delivery notes" below |
 | 3 Catalogue & provider onboarding | ✅ Done (2026-11-13) | See "Phase 3 delivery notes" below |
 | 4 Demand side | ✅ Done (2026-11-13) | See "Phase 4 delivery notes" below |
-| 5 Allocation core | ⏭ Next | Assignments & commitments, Matching, Invitations, Allocation Proposals |
+| Rename | ✅ Done (2026-11-18) | SkillConnect → Bijli Wala (packages `@bijliwala/*`, UI, messages, infra). Docs aligned to the requirement document. |
+| 5A Requirement-doc catch-up | ⏭ Next | Technician wizard fields, declaration, Employee ID; extended requirement form; quotation revision request and clarifications |
+| 5 Allocation core + work orders | Pending | Work orders, Assignments & commitments, Matching, Invitations, Allocation Proposals |
+| 6 Execution | Pending | Attendance, leave, complaints, ratings |
+| 7 Finance + payroll | Pending | Invoices and client billing, business payments, reconciliation, payroll |
+| 8 Advertising | Pending | Advertisers, slots, packages, campaigns, payment, delivery, analytics |
+| 9 CMS, geography, public site, portals | Pending | CMS, geography masters, all public pages, Advertiser and Vendor portal entries, web push |
+| 10 Departments, scoped RBAC, reports | Pending | Departments, state and city scopes, report suite |
+| 11 Hardening, UAT, launch, handover | Pending | Security, performance, UAT, production deployment, handover pack |
 
 ### Phase 1 delivery notes
 - **Delivered:** pnpm monorepo; strict TypeScript; ESLint 9 flat config (with a module-boundary rule), Prettier;
@@ -296,10 +333,22 @@ These are the components described in ARCHITECTURE §5. Build them in this order
 
 ---
 
-## Phase 5 — Allocation core (highest risk, most tests)
+## Phase 5A — Requirement-document catch-up on built modules (SRS §14, §15.1)
+| Item | Backend | Frontend |
+|---|---|---|
+| Technician wizard | Add `qualifications`, `experience`, `workPreferences` and `emergencyContact` to `professionals` (and qualifications to `vendor_workers`). `employeeNo` from `counters` on submit. `declarations[]` with policy versions (`GET /public/policies/current`). Map the extended statuses (FR-TEC-07). A zero-fee plan skips payment (FR-TEC-08). | The onboarding wizard is restructured into the six requirement-doc steps, mobile first. Each step can be saved as a draft. The Employee ID is shown after submission. |
+| Requirement form | Extend the enquiry schema with the project, manpower, commercial and document fields (FR-CLR-02). Show `enquiryNo` as the Requirement ID. Notify Sales and Operations on submission. | Multi-section "Hire Technical Manpower" form, and a requirement detail view. |
+| Quotation decisions | Add `REVISION_REQUESTED` and `POST /quotations/:id/revision-request`. Add a clarification comment thread. | Company quotation detail gets "Request revision" and "Ask a question" actions, and the admin side shows the revision queue. |
+
+**Exit criteria:** AC-01, AC-03 and AC-05 fully pass.
+
+---
+
+## Phase 5 — Allocation core + work orders (highest risk, most tests)
 
 | Order | Module | Key backend items | Frontend |
 |---|---|---|---|
+| 5.0 | **Work Orders** | `work_orders` created in the quotation-accept transaction. Issue, sign, amend and cancel, with a PDF. Allocation approval requires a signed work order (BR-WO-01). | Admin work order editor and issue. Company work order view and sign. |
 | 5.1 | **Assignments (commitments first)** | `commitments` (`personId`, `proposalId`, `assignmentId?`, status `HELD/CONFIRMED/RELEASED`, date range, weekdays, shift minutes; index `{personId, status, startDate, endDate}`). A pure `overlaps(a, b)` function that handles crossing midnight, weekdays and excluded dates. `CommitmentService.hold/confirm/release(session)`, each of which first writes `persons.scheduleVersion` (ARCHITECTURE §6.3). `assignments` (partial unique index `{jobId, personId}` where the assignment is active). States per FR-ASG-02. `assignment_change_requests` for provider cancellation requests. The ability to create assignments is exported **only** to Allocation Proposals. | Provider: my assignments (mobile cards with site address revealed). Company: assigned staff per job. Admin: assignments tab, cancellation requests queue. |
 | 5.2 | **Matching** | Aggregation per position: `$geoNear` then status, skill and eligibility `$match`, then a batched commitment and availability filter in the application, then a pure `score()` with config weights. Vendors are grouped by eligible workers. `match_runs` snapshot (inputs, weights version, candidates with breakdown, exclusions with reasons, overrides with justification). Overrides allowed per FR-MAT-05; availability conflicts are never overridable. | Admin matching tab: run matching per position, ranked table with score breakdown popover, filters, manual add with justification, select candidates and invite. |
 | 5.3 | **Invitations** | `invitations` (unique active per `{positionId, providerRef}`, deadline, status, `responses[]` with versions, `lockedByProposal`, `offeredHeadcount`, `reservedCount`, `confirmedCount`, proposed workers, availability snapshot). Bulk send (outbox, WhatsApp deep link with a signed short token). Mark viewed. `PUT /invitations/:id/response` with `@Idempotent`, version append and conditional update (ARCHITECTURE §6.4). Vendor validation of named workers. Withdraw. Expiry scheduled job. **There is no import path to assignment creation.** | Provider (mobile-first): invitation inbox, invitation detail, respond (availability confirmation; vendors choose a headcount and optionally pick workers). Admin invitations tab with response status and response history. |
@@ -316,6 +365,8 @@ These are the components described in ARCHITECTURE §5. Build them in this order
 | **Attendance** | `attendance_records` (assignment, date, check-in and check-out time, GPS, geofence distance and flag, selfie document reference, proxy flag, company confirmation and dispute, corrections history). Check-in sets the assignment to `ACTIVE`. No-show scheduled job (grace period from config). A dispute raises a complaint event. Summary aggregation used for invoicing. | Provider mobile check-in and check-out (geolocation, camera capture). Vendor proxy attendance. Company daily confirmation grid. Admin corrections. |
 | **Complaints** | `complaints` (link reference, category, severity, SLA due date, state, comment thread with an internal flag, escalation level). SLA breach scheduled job with escalation. Resolution outcome feeds performance. | Raise complaint (all portals), complaint thread, admin complaints queue with SLA countdown. |
 | **Ratings & Performance** | `ratings` (one per assignment, unique), `performance_snapshots`. Nightly recompute with config weights. Writes the denormalised `performanceScore` onto professionals and workers for matching. | Company rating prompt on completion. Provider performance card. |
+| **Leave (v2)** | `leave_requests` with approval. Approved leave blocks matching for those dates and is shown in attendance. | Employee leave request form. HR leave queue. |
+| **Daily operations (v2)** | Read model per job and date: present, absent, late, pending approval, replacements (FR-PRJ-04). QR-code attendance as an alternative to GPS (a signed, rotating site QR). | Company daily operations dashboard. Site QR display for supervisors. |
 
 ---
 
@@ -327,12 +378,43 @@ These are the components described in ARCHITECTURE §5. Build them in this order
 | 7.2 | **Business Payments** | `business_payments` (online or offline, method, reference, unique partial index on `{method, reference, bank}` for offline, status, `capturedPaise`, `refundedPaise`, `recordedBy`, `verifiedBy`, cheque sub-states), `payment_allocations`. Online flow per §6.5 (amount computed on the server from the invoices). Offline record by the company or finance. Verify with maker-checker. Cheque lifecycle. Webhook handler for the BUSINESS domain. Allocation and invoice balance updates with conditional `$inc`. Ledger postings. **Refunds**: `business_refunds`, threshold approval, Razorpay refund from the worker, webhook outcome, guard `refunded <= captured`. | Company: pay invoices (select invoices, Razorpay checkout), record offline payment with a proof upload, payment history. Admin finance: payments list, offline verification queue (maker-checker), cheque status actions, refunds (initiate and approve). |
 | 7.3 | **Payment Reconciliation** | `reconciliation_runs`, `reconciliation_items`, `bank_statement_lines`. Daily gateway reconciliation job (Razorpay payments and settlements against local records, separate books). Bank statement upload (CSV or XLSX through presigned upload, configurable column mapping, parsing in the worker). Auto-match by reference, amount and date tolerance. Manual match. Exception resolution. Receivables ageing and unapplied payments. | Admin: reconciliation runs, run detail (matched, unmatched and exceptions tabs), manual matching UI, statement upload with a column-mapping wizard. |
 
-**Exit criteria:** an invoice can be paid online, with a duplicate webhook doing nothing. An offline payment verified by a second user updates the balance. A partial refund is capped. The reconciliation run flags a planted mismatch.
+| 7.4 | **Payroll (v2)** | `payroll_runs` and `payroll_lines` (ARCHITECTURE §11.3). Calculation from approved attendance, with attendance records marked paid. Maker-checker approval. Mark paid with a transaction reference. Payslip PDFs. Vendor payroll paid to the vendor. PAYROLL ledger book. Configurable allowance and deduction types. | Admin payroll runs (create, review lines, approve, mark paid). Employee earnings and payslips tab. Vendor payroll statement. |
+| 7.5 | **Client billing (v2)** | Daily billing records from client-approved attendance × work order rate. Weekly or monthly invoice generation per contract billing model. Automated payment reminders. | Company invoices and payments pages (replaces the current placeholder). Admin outstanding tracker. |
+
+**Exit criteria:** an invoice can be paid online, with a duplicate webhook doing nothing. An offline payment verified by a second user updates the balance. A partial refund is capped. The reconciliation run flags a planted mismatch. A payroll run never pays the same attendance day twice, and payroll figures never read billing rates (AC-10).
 
 ---
 
-## Phase 8 — Reports, polish, hardening and release
-- **Reports**: query services per module (read-only). Aggregations for FR-RPT-01 to FR-RPT-08 with a common filter DTO. `report_exports` runs CSV and XLSX generation asynchronously (exceljs) and delivers a presigned download link. Admin reports hub, charts, and a dashboard KPI tiles for each portal.
+## Phase 8 — Advertising (SRS §17, ARCHITECTURE §11.4)
+| Order | Module | Backend | Frontend |
+|---|---|---|---|
+| 8.1 | **Advertisers** | `advertisers`, `ad_product_categories`, `ADVERTISER_ADMIN` and `ADVERTISER_USER` roles, signup after OTP, admin approve, reject and suspend. | "Advertise With Us" and advertiser registration. Advertiser portal shell. Admin advertiser queue. |
+| 8.2 | **Slots and packages** | `ad_slots`, `ad_slot_inventory` (per-day capacity guard), `ad_packages` (all prices from the database). Exclusive reservations. | Admin slot editor (page, section, dimensions, devices, formats, priority, limits) and package editor. Advertiser inventory browser. |
+| 8.3 | **Campaigns and creatives** | `ad_campaigns` state machine (FR-CAMP-04), `ad_creatives` through the quarantine and scan pipeline with dimension and URL validation, preview, admin review (approve, request changes, reject), priority and pause. | Campaign wizard (objective → placements → targeting → package → creative → preview → submit). Admin review screen with a creative preview. |
+| 8.4 | **Payment and scheduling** | ADVERTISING payment domain: Razorpay order, webhook-only success, receipt and invoice, ADVERTISING ledger book, refunds. Scheduler for `SCHEDULED → ACTIVE → EXPIRED / BUDGET_EXHAUSTED`, with inventory release and notifications. | Pay step, payment and invoice history. |
+| 8.5 | **Delivery and analytics** | Public `GET /public/ads`, signed impression and click tokens, the `/ad/click/:token` redirect, Redis frequency caps and dedupe, bot filtering, batched `ad_events`, hourly `ad_stats_hourly` roll-up with a capped spend debit. | `<AdSlot>` component on public pages and selected dashboards. Advertiser analytics (impressions, clicks, CTR, spend, remaining budget by day, slot, state and device). Admin advertising revenue. |
+
+**Exit criteria:** AC-12 to AC-18. No unpaid or unapproved campaign is ever served (integration test). A campaign expires at its end date and when its budget runs out. Duplicate impression and click tokens are not counted.
+
+---
+
+## Phase 9 — CMS, geography, public site and portals (SRS §18.3, §18.4, §19.1)
+- **Geography:** `states`, `districts`, `cities` and `pin_codes`, seeded from a versioned dataset with CSV import. Addresses are migrated to geo IDs. Public lookup endpoints feed cascading pickers in every address form.
+- **CMS:** `cms_pages` (block model, draft and published, versions), `cms_menus`, `cms_media`. Admin page builder with block editors, preview and publish. Public `CmsPage` renderer. Prerendering of published pages, `sitemap.xml` and `robots.txt` (ARCHITECTURE §11.6).
+- **Public pages:** every page in FR-WEB-01 built as a CMS page with seed content: Home, About, Services, the per-trade service pages, Industries, Locations/Cities, Hire Manpower, Register as Technician, Register as Vendor, Advertise With Us, Contact, FAQs, Privacy and Terms. Ad slots are placed through CMS `adSlot` blocks.
+- **Portals:** login entry points for Employee, Client, Vendor, Advertiser and Admin, all redirecting by role. Replace the dashboard placeholders (admin dashboard, company invoices, provider invitations and assignments) with live data (AC-21).
+- **Notifications:** real SMS (DLT), WhatsApp Cloud API and email adapters. Web push with `push_subscriptions`. Templates for every event in requirement document §9.
+
+---
+
+## Phase 10 — Departments, scoped RBAC and reports (SRS §18.1, §18.2, §18.5)
+- **Departments:** `departments` with ten seeded entries, user membership, and department role templates.
+- **Scopes:** add `STATE` and `CITY` scope types and a `scopedQuery()` helper applied in every admin list and report. Sensitive permission families for finance, document download and export. IDOR and scope tests for every admin list.
+- **Reports:** query services per module (read-only). Aggregations for FR-RPT-01 to FR-RPT-14 with a common filter DTO, including state and city. `report_exports` runs CSV and XLSX generation asynchronously (exceljs) and delivers a presigned download link. Admin reports hub, charts, and dashboard KPI tiles for each portal.
+
+---
+
+## Phase 11 — Hardening, UAT, launch and handover (requirement document §15 milestone 8, §17)
 - **Public site polish**: SEO meta, image optimisation, responsive QA from 360 px.
 - **DPDP**: consent records, data export and anonymisation endpoints.
 - **Hardening**:
@@ -342,6 +424,18 @@ These are the components described in ARCHITECTURE §5. Build them in this order
   - Backup and restore drill.
   - Log redaction check.
 - **Release**: staging deployment, seed data, UAT scripts per role, production runbook (secrets, Razorpay live keys, WhatsApp templates approved, DLT templates registered, index migrations).
+- **Handover pack** (SRS §19.4):
+  - source code
+  - index sync and data migration scripts
+  - API documentation
+  - environment documentation
+  - deployment scripts
+  - payment and third-party integration guides
+  - test reports
+  - backup and restore runbook
+  - a secure credentials handover
+  - a disclosure of every recurring third-party cost
+- **Training**: role-based walkthroughs for HR, Operations, Finance, Advertising and the Super Admin.
 
 ---
 

@@ -57,24 +57,24 @@ const BANNERS = [
     word: 'CREW',
     title: 'Site staffing',
     text: 'Skilled crews, ready when you are',
-    tone: 'bg-violet-200 text-violet-950 dark:bg-violet-950 dark:text-violet-100',
-    wordTone: 'text-lime-100 dark:text-violet-900',
+    tone: 'bg-primary text-primary-foreground',
+    wordTone: 'text-bolt/25',
   },
   {
     icon: Wrench,
     word: 'FIX',
     title: 'Maintenance',
     text: 'Electricians and technicians on call',
-    tone: 'bg-amber-200 text-amber-950 dark:bg-amber-950 dark:text-amber-100',
-    wordTone: 'text-orange-100 dark:text-amber-900',
+    tone: 'bg-bolt text-bolt-foreground',
+    wordTone: 'text-white/45',
   },
   {
     icon: Sparkles,
     word: 'CARE',
     title: 'Housekeeping & security',
     text: 'Facility teams you can trust',
-    tone: 'bg-emerald-200 text-emerald-950 dark:bg-emerald-950 dark:text-emerald-100',
-    wordTone: 'text-teal-50 dark:text-emerald-900',
+    tone: 'bg-slate-800 text-white',
+    wordTone: 'text-bolt/20',
   },
 ];
 
@@ -199,7 +199,7 @@ export default function HomePage() {
             </p>
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
               Skilled people for your business,{' '}
-              <span className="text-primary">verified and on schedule.</span>
+              <span className="bolt-highlight">verified and on schedule.</span>
             </h1>
             <p className="mt-4 max-w-xl text-lg text-muted-foreground">
               Staff electricians, technicians, housekeeping, security and more, from individual professionals
@@ -223,7 +223,7 @@ export default function HomePage() {
                   onChange={(e) => setQuery(e.target.value)}
                 />
               </div>
-              <Button type="submit" size="lg">
+              <Button type="submit" size="lg" variant="bolt">
                 Find services
               </Button>
             </form>

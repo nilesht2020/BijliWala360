@@ -1,5 +1,5 @@
 import type { FilterQuery, Model } from 'mongoose';
-import type { PageMeta } from '@skillconnect/contracts';
+import type { PageMeta } from '@bijliwala/contracts';
 
 /** Escapes user text for a case-insensitive `$regex` search (no regex injection / ReDoS). */
 export function escapeRegex(value: string): string {

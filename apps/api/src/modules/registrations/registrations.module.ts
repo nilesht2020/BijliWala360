@@ -30,7 +30,7 @@ import {
   type RegistrationPaymentView,
   type RegistrationRefundView,
   type RegistrationView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, RequirePermissions } from '../../core/auth/decorators';

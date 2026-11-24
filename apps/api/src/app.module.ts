@@ -12,6 +12,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
 import { EnquiriesModule } from './modules/enquiries/enquiries.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { PersonsModule } from './modules/persons/persons.module';
 import { PlansModule } from './modules/plans/plans.module';
@@ -49,6 +50,7 @@ import { UsersModule } from './modules/users/users.module';
     EnquiriesModule,
     JobsModule,
     QuotationsModule,
+    DashboardModule,
     BackgroundModule,
   ],
   providers: [

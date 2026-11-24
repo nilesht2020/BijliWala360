@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { emailSchema, passwordSchema } from '@skillconnect/contracts';
+import { emailSchema, passwordSchema } from '@bijliwala/contracts';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
 import { Button } from '@/components/ui/button';
 import {

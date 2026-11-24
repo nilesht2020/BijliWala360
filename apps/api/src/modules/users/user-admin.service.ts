@@ -6,7 +6,7 @@ import type {
   UserListQuery,
   UserStatus,
   UserView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { AuditActor, AuditContext } from '../../core/audit/audit.service';
 import { TransactionRunner } from '../../core/database/transaction-runner';
 import { DomainError } from '../../core/errors/domain-error';

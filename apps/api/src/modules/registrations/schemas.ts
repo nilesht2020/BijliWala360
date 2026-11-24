@@ -12,7 +12,7 @@ import {
   type RefundStatus,
   type RegistrationPaymentState,
   type VerificationState,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 
 /* ------------------------------------------------------------ provider_registrations (DATABASE §7) */
 

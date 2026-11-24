@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { openDocumentViewer } from '@/components/document-viewer';
 import type {
   AdminEnquiryCreateInput,
   CommercialTerms,
@@ -22,7 +23,7 @@ import type {
   SiteInput,
   SiteUpdateInput,
   SiteView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { api, ApiError } from '@/lib/api-client';
 import { newIdempotencyKey } from '@/lib/utils';
 
@@ -181,9 +182,9 @@ export function useQuotationDecision(id: string) {
   };
 }
 
-export async function openPdf(path: string): Promise<void> {
-  const { url } = await api.get<{ url: string }>(path);
-  window.open(url, '_blank', 'noopener');
+/** Shows a quotation PDF in the in-app viewer (no new tab, no file saved). */
+export function openPdf(path: string, title = 'Quotation'): void {
+  openDocumentViewer({ urlPath: path, title, mime: 'application/pdf' });
 }
 
 export function useCompanyJobs(params: ListParams) {

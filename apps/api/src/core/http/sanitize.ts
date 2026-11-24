@@ -1,6 +1,6 @@
 import { Injectable, type NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
-import { REQUEST_ID_HEADER } from '@skillconnect/contracts';
+import { REQUEST_ID_HEADER } from '@bijliwala/contracts';
 import { requestIdOf } from './response-envelope.interceptor';
 
 /**

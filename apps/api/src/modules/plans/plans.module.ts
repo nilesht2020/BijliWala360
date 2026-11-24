@@ -24,7 +24,7 @@ import {
   type ProviderType,
   type RegistrationPlanInput,
   type RegistrationPlanView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, Public, RequirePermissions } from '../../core/auth/decorators';

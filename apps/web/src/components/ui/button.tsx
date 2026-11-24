@@ -10,6 +10,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90',
+        bolt: 'bg-bolt text-bolt-foreground shadow-sm hover:bg-bolt/85',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         outline: 'border border-input bg-background hover:bg-muted',
         ghost: 'hover:bg-muted',

@@ -1,36 +1,83 @@
 # Software Requirements Specification
-## SkillConnect — B2B Service Marketplace Platform
+## Bijli Wala — Pan-India Technical Manpower Supply, Workforce Management & Advertising Platform
 
 | Field | Value |
 |---|---|
 | Document | Software Requirements Specification (SRS) |
-| Version | 1.0 (Draft for sign-off) |
-| Date | 2026-11-13 |
-| Status | Draft. Section 13 lists the assumptions that need confirmation. |
+| Version | 2.0 (Draft for sign-off) |
+| Date | 2026-11-18 |
+| Primary source | `docs/bijli wala .docx` (Project Requirement Document v1.0). Where this SRS and that document disagree, the requirement document wins and this SRS must be corrected. |
+| Status | Draft. Section 13 lists the v1 assumptions; Section 20 lists the decisions still open for v2. |
+
+### Version 2.0 changes
+- The product is renamed from SkillConnect to **Bijli Wala**.
+- The scope now follows the Bijli Wala requirement document. It has three independent but connected business modules:
+  - **Module A**: technical manpower registration and supply.
+  - **Module B**: client manpower booking.
+  - **Module C**: third-party advertising.
+- Sections 1–13 keep their numbering and requirement IDs, because code comments and the test traceability matrix refer to them. They are updated where the requirement document changes them.
+- Sections 14–20 are new:
+  - Requirements the document adds: technician registration steps, work orders, payroll, client billing, advertising, CMS, geography, departments and the website structure.
+  - Acceptance criteria and handover.
+  - A section-by-section traceability matrix back to the requirement document.
+- **Changes from v1.0:**
+  - **Payroll** for deployed employees is now in scope (Section 16). It was out of scope as A-01 and in Section 12.
+  - **Work orders** are now first-class records.
+  - Clients can **request a revision** of a quotation.
+  - The technician registration gains a **declaration step** and an **Employee ID**.
+  - A **third-party advertising marketplace**, a **website CMS**, **geography masters** (states, districts, cities, PIN codes) and **departments with state- and city-scoped permissions** are added.
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-This document sets out the functional and non-functional requirements for SkillConnect. SkillConnect is a business-to-business marketplace. Companies use it to source skilled service providers for on-site and project work, either individual professionals or vendors and contractors who manage a team of workers. The platform team controls who is allocated to each job.
+This document sets out the functional and non-functional requirements for Bijli Wala. Bijli Wala is a Pan-India technical manpower outsourcing and industrial advertising management platform. Bijli Wala registers, verifies, manages and supplies technical manpower to organisations across India. Examples are electricians, electrical engineers, plumbers, HVAC technicians, civil engineers and other technical staff. They can be registered individually or through vendors and contractors who manage a team.
+
+The company acts as the central manpower service provider. When a client submits a manpower requirement, the operations team does the following:
+- identifies suitable registered employees
+- prepares a quotation and work order
+- deploys the employees
+- manages their attendance and duty records
+- bills the client under the agreed commercial terms
+
+The platform also earns advertising revenue. It sells dynamic banner placements to brands selling electrical, plumbing, HVAC, civil, construction, safety and industrial products. It is a complete business management system, not just a registration website or static dashboard.
 
 This document is the source of truth for the architecture, database design, API contract, development plan and test plan.
 
 ### 1.2 Scope
-SkillConnect provides:
-- Onboarding, verification and one-time paid registration for service providers (individual professionals and vendors).
-- Onboarding of business clients (companies), and handling their service enquiries and quotations.
-- Job creation, candidate matching, invitations, availability collection, and **admin-controlled allocation** through approved allocation proposals.
-- Assignment execution, with attendance and work tracking.
-- Business service payments, both online (Razorpay) and offline (bank transfer, cheque and similar), with invoicing, refunds and reconciliation.
-- Notifications through WhatsApp, SMS, email and in-app channels.
+Bijli Wala provides three business modules.
+
+**Module A — Technical manpower registration and supply**
+- Step-by-step registration, verification and activation of technical professionals across India. Examples: electrical engineers, electricians, supervisors, plumbers, pipe fitters, civil, mechanical and HVAC engineers, AC, fire-safety, lift and CCTV technicians, welders, carpenters, masons, network engineers and other maintenance staff.
+- Technicians register either as individual professionals or as workers of a registered vendor.
+- An employee dashboard covering profile, work offers, assignments, availability, attendance, earnings and payslips.
+
+**Module B — Client manpower booking**
+- Registration of corporate clients. Examples: commercial buildings, government contractors, construction companies, factories, industrial plants, hospitals, hotels, malls, offices, warehouses, infrastructure projects, and facility-management and MEP contractors.
+- Requirement submission for anything from one employee to hundreds.
+- Quotation with approval or revision, work order, admin-controlled allocation, deployment, attendance, payroll, client billing, invoices, payments, refunds and reconciliation.
+
+**Module C — Third-party advertising**
+- Advertiser registration.
+- Super-Admin-defined ad slots on any page.
+- Campaign packages: fixed daily, weekly or monthly, CPC and CPM.
+- Creative upload and preview, and admin approval.
+- Razorpay payment verified by webhook.
+- Automatic scheduling, delivery, expiry and analytics.
+
+**Platform services across all modules**
+- Super Admin control.
+- Dynamic roles and permissions, scoped by department, state and city.
+- Geography masters.
+- Website CMS.
+- Notifications through WhatsApp, SMS, email, in-app and push.
 - Complaints, reports and a full audit trail.
 
-The platform has three client surfaces:
-1. **Public website**: service catalogue, provider sign-up and business enquiry.
-2. **Web portals**: Company portal, Provider portal (Professional or Vendor) and Admin console.
-3. **Mobile-responsive provider workflows**: responding to invitations, attendance and documents. There is no native app in the MVP.
+**Client surfaces**
+1. **Public website**: the pages in Section 19.1, managed through the CMS.
+2. **Login portals**: Employee (technician), Client, Vendor, Advertiser and Admin. After sign-in, each user is sent to the dashboard for their role.
+3. **Mobile-first employee workflows**: registration, work offers, attendance and payslips on a smartphone browser. Native apps come later; the API must support them.
 
 ### 1.3 Definitions
 
@@ -57,8 +104,20 @@ The platform has three client surfaces:
 | Registration Payment | The one-time fee a provider pays to register. It is kept separate from business payments. |
 | Business Payment | Money a company pays for services, recorded against an invoice. |
 | Reconciliation | Matching recorded payments against gateway settlements or bank statements, and against invoices. |
+| Technician / Employee | The requirement document's term for a technical professional registered on the platform. It means either an Individual Professional or a Vendor Worker. Each has an **Employee ID**. |
+| Client / Manpower Buyer | The requirement document's term for a Company. |
+| Requirement | The requirement document's term for a client's manpower request. Implemented as an **Enquiry**, and shown to clients with a Requirement ID. |
+| Project | The requirement document's term for confirmed work at a client site. Implemented as a **Job**, and shown with a Project ID. |
+| Work Order | A signed-off commercial instrument generated after quotation approval. It covers client, project, headcount by category, billing rates, duty hours, duration, payment, overtime and replacement terms, taxes and signatures. Every assignment references one. |
+| Payroll | The calculation and recording of wages payable to deployed employees. It is kept separate from client billing. |
+| Advertiser | A manufacturer, distributor, dealer or supplier that buys advertising placements. |
+| Ad Slot | A configurable placement on a page and section, with device, dimension, format, pricing and approval rules. |
+| Ad Package | A priced offer for a slot: fixed daily, weekly or monthly, CPC or CPM. Prices come from configuration and are never hardcoded. |
+| Campaign | An advertiser's purchase of one or more slots, with creatives, targeting, dates and budget. |
+| Department | An internal organisational unit, for example HR or Finance, used to group users and permissions. |
 
 ### 1.4 References
+- **`docs/bijli wala .docx`: the Bijli Wala Project Requirement Document v1.0, the primary source.**
 - Business decisions supplied by the product owner (provider model, registration fee, allocation and payments).
 - Razorpay Orders, Payments, Refunds and Webhooks API documentation.
 - WhatsApp Business Cloud API documentation.
@@ -70,7 +129,7 @@ The platform has three client surfaces:
 ## 2. Overall Description
 
 ### 2.1 Product Perspective
-SkillConnect is a new, standalone system built as a modular monolith with a single deployable backend. It integrates with these external services:
+Bijli Wala is a new, standalone system built as a modular monolith with a single deployable backend. It integrates with these external services:
 
 | System | Purpose |
 |---|---|
@@ -78,7 +137,9 @@ SkillConnect is a new, standalone system built as a modular monolith with a sing
 | WhatsApp Business API | Template-based transactional notifications. |
 | SMS provider (DLT-registered) | OTP delivery and fallback notifications. |
 | Email (SMTP or transactional provider) | Invoices, receipts and account emails. |
-| S3-compatible object storage | Documents, images, invoices and attendance photos. |
+| S3-compatible object storage | Documents, images, invoices, attendance photos and ad creatives. Private buckets, with a CDN for public website media. |
+| Google Maps | Site geocoding, distance for matching, and attendance geofence display. |
+| PDF and Excel generation | Quotations, work orders, invoices, payslips and report exports. |
 
 ### 2.2 User Classes and Roles
 
@@ -95,11 +156,20 @@ SkillConnect is a new, standalone system built as a modular monolith with a sing
 | Individual Professional | Provider | Manages their own profile, documents and registration, responds to invitations, and records attendance. |
 | Vendor Admin | Provider | Manages the vendor profile, workers and registration, responds to invitations with capacity, and manages assignments. |
 | Vendor Worker | Provider (light) | Optional OTP login to view their own assignments and mark attendance. Cannot respond to invitations. |
+| Advertiser Admin | Advertiser | Manages the advertiser profile, campaigns, creatives, payments and invoices, and views analytics. |
+| Advertiser User | Advertiser | Creates and edits campaigns. Restricted access to payments. |
+| Department staff | Admin | Custom roles for Recruitment, HR, Operations, Sales, Client Relations, Finance, Advertising, Customer Support, Legal/Compliance and IT/System Administration. Each role can be limited to particular states or cities (Section 18). |
 
-Permissions are defined as fine-grained permission codes, for example `allocation.approve`. Roles are configurable bundles of these codes.
+Permissions are defined as fine-grained permission codes, for example `allocation.approve`. Roles are configurable bundles of these codes. The Super Admin can create unlimited custom roles. Permission actions are View, Create, Edit, Delete, Approve, Reject, Export, Download, Assign, Suspend and Manage.
 
 ### 2.3 Operating Environment
 - Backend: Node.js LTS, NestJS, MongoDB replica set (required for transactions), Redis and BullMQ.
+- **Stack deviation from the requirement document (§12):** the document recommends Next.js, PostgreSQL and Prisma. Bijli Wala keeps the stack already built: a React (Vite) SPA, NestJS and MongoDB with Mongoose. Reasons:
+  - Phases 1–4 are delivered on this stack.
+  - MongoDB replica-set transactions meet the integrity needs for allocation and finance.
+  - The requirement document allows "PostgreSQL or an equivalent reliable database".
+
+  The data model is still normalised by reference, with unique identifiers, indexes, and created/updated/created-by fields on every important record (§11 of the document). SEO for public pages is open item O-01 (Section 20).
 - Frontend: React SPA running in current versions of Chrome, Edge, Safari and Firefox, and in mobile browsers on Android 10+ and iOS 15+.
 - Deployment: Docker containers with separate API and worker processes.
 - Locale: India first. Currency is INR, the time zone is Asia/Kolkata for display and data is stored in UTC. English is the UI language in the MVP, and the i18n structure is ready for Hindi.
@@ -114,7 +184,7 @@ Permissions are defined as fine-grained permission codes, for example `allocatio
 ### 2.5 Assumptions and Dependencies
 - Razorpay merchant account, WhatsApp Business account and DLT registration are available before UAT.
 - Background verification (police checks and similar) is done manually by the Verification Officer in the MVP. There is no third-party KYC API.
-- The platform invoices companies directly. Provider payouts are handled outside the system in the MVP; see Section 12.
+- The platform invoices companies directly. Wages for deployed employees are calculated and recorded through payroll (Section 16). Payroll is kept separate from client billing. The actual bank disbursement is recorded with a transaction reference; an automated payout API is out of scope (Section 12).
 
 ---
 
@@ -583,9 +653,9 @@ All reports can be filtered by date, company, category and location, and exporte
 ---
 
 ## 12. Out of Scope for MVP
-- Provider payouts or settlements through the platform. Payouts are handled outside the system; the system only records the provider rate.
-- Recurring subscriptions or annual renewals.
-- Native mobile apps.
+- Automated payout disbursement through a bank or payout API. Payroll is **in scope** from v2.0 (Section 16): wages are calculated and recorded, and each disbursement is recorded with its transaction reference.
+- Recurring subscriptions or annual renewals for provider registration. Advertising packages are bought per campaign (Section 17).
+- Native mobile apps. The API must support future mobile apps and integrations (requirement document §18).
 - Automated assignment of any kind.
 - Self-serve instant booking by companies (all jobs go through enquiry and quotation, or are created by an admin).
 - Third-party background verification or KYC APIs.
@@ -599,7 +669,7 @@ All reports can be filtered by date, company, category and location, and exporte
 
 | # | Assumption | Default taken in this SRS |
 |---|---|---|
-| A-01 | Who pays providers? | Off-platform. The platform invoices companies and records provider rates only. |
+| A-01 | Who pays providers? | **Superseded in v2.0.** Payroll is calculated and recorded in the platform (Section 16), and disbursement happens outside it with a recorded reference. |
 | A-02 | Is the registration fee paid before or after verification? | Before verification. A configurable refund applies on rejection. |
 | A-03 | Must a proposal be approved by a different admin than the one who created it? | Yes, configurable, default on. |
 | A-04 | Do vendor workers log in? | Optional OTP login. A vendor can mark attendance on a worker's behalf. |
@@ -611,3 +681,296 @@ All reports can be filtered by date, company, category and location, and exporte
 | A-10 | What is the geographic scope at launch? | India, INR only. |
 | A-11 | Is one person allowed in multiple vendors? | No, a person can be active with only one vendor at a time. |
 | A-12 | What granularity do commitments use? | Date plus shift window. Overlapping time ranges on the same date conflict. |
+
+---
+
+## 14. Functional Requirements: Module A — Technician Registration and Employee Dashboard (requirement doc §3, User Type 1)
+
+These requirements extend Sections 4.1–4.7. A technician is an Individual Professional, or a Vendor Worker that a vendor adds.
+
+### 14.1 Registration wizard (TEC)
+The public entry point is **"Register as a Technical Professional"**. Registration is split into steps, and the employee can save a draft and resume it.
+
+| ID | Requirement |
+|---|---|
+| FR-TEC-01 | **Step 1, Basic information.** Full name, mobile number with OTP verification, email, date of birth, gender (only where operationally required), profile photo, permanent and current address, state, district, city and PIN code. State, district, city and PIN code are picked from the geography masters (Section 18.3). |
+| FR-TEC-02 | **Step 2, Professional information.** Primary technical category, specialisation, qualification (ITI, Diploma or Degree), institute, passing year, total experience, previous company, previous project experience, technical certificates, resume, and a work portfolio where applicable. |
+| FR-TEC-03 | **Step 3, Work availability.** Current employment status, whether available for work, available-from date, preferred states and cities, willing to relocate, willing to travel, preferred employment type, expected daily wage, expected monthly salary, shift preference and an emergency contact. |
+| FR-TEC-04 | **Step 4, Documents and verification.** Identity proof through a compliant verification process, PAN where required, qualification and experience certificates, resume, and bank verification details where required. Unnecessary Aadhaar data is not stored (FR-DOC-05). Access to these documents is restricted. |
+| FR-TEC-05 | **Step 5, Declaration.** The employee accepts the terms and conditions, the privacy policy, consent for verification, a statement that the submitted information is accurate, and the employment and deployment policies. Each acceptance is stored with the policy version, timestamp, IP address and user agent. |
+| FR-TEC-06 | **Step 6, Submission.** The system generates a unique **Employee ID** with a configurable prefix and an atomic counter. It sends confirmation by SMS and email, creates the employee dashboard, sets the status to `PENDING_VERIFICATION` and notifies HR. HR can approve, reject or request corrections. |
+| FR-TEC-07 | **Employee account statuses:** `DRAFT`, `SUBMITTED`, `PENDING_VERIFICATION`, `DOCUMENTS_REQUIRED`, `UNDER_REVIEW`, `APPROVED`, `ACTIVE`, `TEMPORARILY_UNAVAILABLE`, `ON_ASSIGNMENT`, `SUSPENDED`, `REJECTED`, `INACTIVE`. These map onto the existing provider lifecycle (FR-PRO-04): `DOCUMENTS_REQUIRED` maps to `CHANGES_REQUESTED`, while `ON_ASSIGNMENT` and `TEMPORARILY_UNAVAILABLE` are derived operational states. Only approved and eligible employees can be assigned. |
+| FR-TEC-08 | Whether a registration fee applies (Section 4.5) is configurable per plan. A plan with a zero fee skips the payment step. |
+
+### 14.2 Employee dashboard (EMP)
+| ID | Requirement |
+|---|---|
+| FR-EMP-01 | **My Profile:** personal information, skills, qualifications, documents, experience and profile completion. |
+| FR-EMP-02 | **My Work:** new work offers, and current, upcoming and completed assignments. Each shows project location, duty timing, reporting manager and work order details. |
+| FR-EMP-03 | **Availability:** available or unavailable, preferred city, preferred work category, expected daily wage and leave dates. |
+| FR-EMP-04 | **Attendance:** check-in and check-out, working hours, overtime, attendance history and attendance correction requests. |
+| FR-EMP-05 | **Earnings:** daily wage details, approved working days, overtime earnings, deductions, payment status and history, and payslip download (Section 16). |
+| FR-EMP-06 | **Other:** notifications, complaints, help and support, change password and account settings. |
+
+### 14.3 Work offer acceptance (OFR)
+| ID | Requirement |
+|---|---|
+| FR-OFR-01 | When HR offers a job, the employee gets an SMS and an app notification, can see the project details, and can accept or decline within the configured response window. This is the existing invitation flow (Section 6.4). |
+| FR-OFR-02 | HR receives the response. An accepted offer is confirmed only after the required approval: an allocation proposal is approved and an assignment created (BR-ALC-02, BR-ALC-03). The employee then receives reporting instructions, and the assignment is recorded in the employee's history. |
+| FR-OFR-03 | HR may skip the offer step where a valid contract or company employment arrangement allows it. This is recorded as an audited, permission-gated (`allocation.override_offer`) direct proposal line, and it still goes through proposal approval. |
+
+---
+
+## 15. Functional Requirements: Module B — Client Booking, Work Orders and Projects (requirement doc §3, User Type 2, and §6)
+
+### 15.1 Client registration and requirement submission (CLR)
+| ID | Requirement |
+|---|---|
+| FR-CLR-01 | The public entry point is **"Hire Technical Manpower"**. Registration fields: company legal name, business type, contact person, designation, mobile number with OTP, email, GSTIN and company PAN where applicable, registered office address, state, city, PIN code, website and registration documents. The client stays pending until verified (FR-CMP-02). |
+| FR-CLR-02 | **Requirement form** (extends FR-ENQ-01). **Project fields:** name, type, description, site address, state, city, PIN code, start date and expected completion. **Manpower fields:** category, specialisation, headcount, qualification, minimum experience, certificates, daily duty hours, number of shifts, working days, weekly off, night shift, expected joining date and contract duration. **Commercial fields:** daily or monthly billing preference, optional budget, whether accommodation, food, transport and safety equipment are provided, and special conditions. **Documents:** requirement document, BOQ, site details and other attachments. One requirement may ask for one employee or hundreds. |
+| FR-CLR-03 | On submission the system generates a unique **Requirement ID**, sends a confirmation, notifies Sales and Operations, sets the status to `NEW` and shows the requirement on the client dashboard. |
+| FR-CLR-04 | **Internal quotation.** Sales or an admin reviews employee availability, skills, location, wages, transport, accommodation, statutory costs, the company service margin, taxes and other charges, then sends a quotation (Section 5.3). |
+| FR-CLR-05 | **Client decision.** The client can approve, reject, **request a revision** or **ask for clarification**. A revision request moves the quotation to `REVISION_REQUESTED` and notifies Sales; the admin's revision creates version n+1 (FR-QUO-02). Clarifications are threaded comments on the quotation. |
+| FR-CLR-06 | No employee is deployed against a commercial requirement until the quotation is approved, the work order is issued and the required approvals are complete. |
+| FR-CLR-07 | The client can see profiles of proposed candidates, subject to privacy settings. This changes A-05: by default, before confirmation the client sees only skills, experience and verification badges, not contact details. |
+
+### 15.2 Work orders (WO)
+| ID | Requirement |
+|---|---|
+| FR-WO-01 | When a quotation is accepted, the system creates a **Work Order** in `DRAFT` with a unique Work Order ID. It contains client and project details, employee count and categories, daily billing rates, duty hours, contract duration, payment, overtime and replacement terms, responsibilities, applicable taxes and authorised signatures. |
+| FR-WO-02 | Work order statuses: `DRAFT → ISSUED → CLIENT_SIGNED → ACTIVE → COMPLETED`, plus `CANCELLED` and `AMENDED`. An amendment creates a new version linked to the previous one. |
+| FR-WO-03 | A PDF is generated and stored. Client sign-off is recorded with the user, timestamp and IP address. |
+| FR-WO-04 | Every assignment references a work order (BR-WO-01). The job (project) cannot move to `IN_PROGRESS` without an active work order. |
+
+### 15.3 Projects (PRJ)
+| ID | Requirement |
+|---|---|
+| FR-PRJ-01 | A project (a Job, Section 6.2) has a Project ID, client, site address, project manager, start and end dates, assigned employees, required and deployed counts, attendance, billing, payment status and project status. |
+| FR-PRJ-02 | Client-facing project statuses are `DRAFT`, `QUOTATION_PENDING`, `AWAITING_APPROVAL`, `READY_FOR_DEPLOYMENT`, `ACTIVE`, `ON_HOLD`, `COMPLETED` and `CANCELLED`. They are derived from the enquiry, quotation, work order and job states. |
+| FR-PRJ-03 | **Deployment.** When the work order is active, employees get assignment details, the client gets deployment details, attendance tracking starts on the joining date and the project becomes `ACTIVE`. |
+| FR-PRJ-04 | **Client daily operations view.** Shows total assigned, present, absent, late check-ins, attendance pending approval, replacement requests and daily deployment reports. |
+| FR-PRJ-05 | **Matching explanations.** The candidate list shows why each candidate matches, using the score breakdown (FR-MAT-05). Filters cover category, skill, experience, qualification, location, availability, expected wage, previous project experience and verification status. |
+
+### 15.4 Client dashboard and data isolation (CLD)
+| ID | Requirement |
+|---|---|
+| FR-CLD-01 | **Sections:** overview, company profile, submit requirement, my requirements, quotations, work orders, active projects, assigned employees, attendance reports, replacement requests, invoices, payments, complaints, notifications and support. |
+| FR-CLD-02 | A client can access only its own company details, requirements, projects, assigned employees, attendance, quotations, invoices and payments. Cross-client access returns `404` (no information leak) and is covered by IDOR tests. |
+
+---
+
+## 16. Functional Requirements: Payroll and Client Billing (requirement doc §7, §8)
+
+### 16.1 Payroll (PAY)
+| ID | Requirement |
+|---|---|
+| FR-PAY-01 | A payroll run covers a period, for example weekly or monthly. For each deployed employee it calculates: approved working days, daily or monthly wage, overtime, approved allowances, deductions and net payable. Inputs are **approved** attendance only. |
+| FR-PAY-02 | Payroll run statuses: `DRAFT → CALCULATED → APPROVED → PAID` (partially or fully), plus `CANCELLED`. Approval is maker-checker (`payroll.approve`, separate from the preparer). |
+| FR-PAY-03 | Each payroll line records the payment date and transaction reference when paid. A payslip PDF is generated and is visible on the employee dashboard. |
+| FR-PAY-04 | For vendor workers, payroll is payable to the **vendor**, with a per-worker breakdown, as a vendor payment. For individual professionals it is payable to the professional. |
+| FR-PAY-05 | Employee wage rates (assignment `providerRate`) and client billing rates (work order) are stored separately, and **payroll never reads client billing figures** (BR-FIN-06). |
+| FR-PAY-06 | Payroll writes ledger entries in a separate `PAYROLL` book. |
+
+### 16.2 Client billing (BIL)
+| ID | Requirement |
+|---|---|
+| FR-BIL-01 | The system generates daily billing records from attendance: the contracted daily rate × billable (client-approved) attendance, plus approved overtime and other agreed charges, minus discounts. |
+| FR-BIL-02 | Weekly or monthly invoices are generated according to the work order's billing model (Section 7.1). Different billing models per client contract are supported: daily, monthly, milestone and fixed. |
+| FR-BIL-03 | Each invoice shows the invoice total, amount received and balance due. Clients download invoices and see their payment history. Admins track outstanding amounts. Automated payment reminders follow a configurable schedule. |
+
+### 16.3 Payment categories and statuses (PMT)
+| ID | Requirement |
+|---|---|
+| FR-PMT-01 | Payment categories: client payments, employee salary payments (payroll), vendor payments, advertiser payments, refunds, company commissions and other business expenses. Each payment has a transaction ID, related user or company, related invoice, amount, method, gateway reference, transaction date, status and reconciliation status. |
+| FR-PMT-02 | Statuses are shown to users as `PENDING`, `INITIATED`, `SUCCESSFUL`, `FAILED`, `REFUNDED`, `PARTIALLY_REFUNDED` and `DISPUTED`. These map onto FR-BPAY-06; `DISPUTED` is added for Razorpay dispute webhooks. |
+| FR-PMT-03 | A payment is never marked successful without server-side verification (FR-BPAY-01, FR-WHK-*). |
+
+---
+
+## 17. Functional Requirements: Module C — Third-Party Advertising (requirement doc §3, User Type 3, and §5)
+
+### 17.1 Advertisers (ADV)
+| ID | Requirement |
+|---|---|
+| FR-ADV-01 | The public entry point is **"Advertise With Us"**. Registration fields: company name, brand name, contact person, designation, mobile number with OTP, email, website, GSTIN where applicable, company address, state, city, product categories, business description and logo. |
+| FR-ADV-02 | Advertiser statuses: `PENDING`, `APPROVED`, `ACTIVE`, `REJECTED`, `SUSPENDED`. Only approved or active advertisers can submit campaigns. |
+| FR-ADV-03 | Product categories are an admin-managed list, separate from the service catalogue. Examples: switches and wires, cables and panels, transformers and generators, lighting, plumbing pipes and fittings, pumps and motors, HVAC, air conditioners, fire safety, construction materials, tools and machinery, safety equipment and industrial supplies. |
+| FR-ADV-04 | **Advertiser dashboard:** profile, ad packages, available inventory, create campaign, upload creatives, preview, approval status, active, paused and expired campaigns, impressions, clicks, CTR, spend, remaining budget, payments, invoices, notifications and support. |
+
+### 17.2 Ad slots and inventory (ADS)
+| ID | Requirement |
+|---|---|
+| FR-ADS-01 | The Super Admin creates unlimited ad slots. Each slot has: a unique Ad Slot ID, name, page, section, placement position, supported devices, creative dimensions, maximum file size, supported formats, available campaign types, pricing model, base price, availability status and an approval requirement. |
+| FR-ADS-02 | Slots can go on any CMS page: home (top, hero, middle, footer), category pages (Electrical, Plumbing, HVAC, Civil, Industrial Products), About, Contact, Services, sidebar, in-content, footer, mobile banner, sponsored listings and selected dashboard placements. All placements are configured in the admin panel; none are hardcoded. |
+| FR-ADS-03 | **Admin controls:** enable or disable a slot, change its position or dimensions, set page, device and location visibility, set campaign priority, pause any campaign, replace a creative, reserve an exclusive placement, and set daily impression limits. |
+| FR-ADS-04 | **Ad packages:** fixed daily, weekly or monthly, CPC or CPM. Prices, taxes and limits are configured by the Super Admin and **never hardcoded**. |
+
+### 17.3 Campaigns (CAMP)
+| ID | Requirement |
+|---|---|
+| FR-CAMP-01 | **Campaign wizard:** objective (brand awareness, product promotion, dealer or distributor promotion, website traffic, lead generation or new product launch), then placements (several pages and slots), then targeting (all India, or chosen states, cities, product categories and devices), then package, then creative, then preview, then submit. |
+| FR-CAMP-02 | **Creative fields:** campaign name, headline, banner image, desktop image, mobile image, destination URL, start and end dates, pages, slots, locations and budget. The server validates file type by magic bytes, dimensions against the slot, file size, the URL (https only, no internal or blocklisted hosts) and runs content moderation by admin review. Files are virus-scanned (FR-DOC-02). |
+| FR-CAMP-03 | The **preview** renders the actual creative in each selected slot's layout. |
+| FR-CAMP-04 | Campaign statuses: `DRAFT`, `SUBMITTED`, `UNDER_REVIEW`, `CHANGES_REQUIRED`, `APPROVED`, `PAYMENT_PENDING`, `SCHEDULED`, `ACTIVE`, `PAUSED`, `EXPIRED`, `BUDGET_EXHAUSTED`, `REJECTED`. Transitions are enforced by a state machine. |
+| FR-CAMP-05 | **Payment.** When a campaign is approved, the advertiser pays through Razorpay. **Only a verified webhook** marks the payment successful. A browser-side success message never does. After payment the system generates a receipt and invoice, schedules the campaign (`SCHEDULED`), and activates it automatically at the start time. |
+| FR-CAMP-06 | **Automatic expiry.** At the end date, or when the budget or impression limit is exhausted, the system stops delivery, marks the campaign `EXPIRED` or `BUDGET_EXHAUSTED`, notifies the advertiser, updates slot inventory and releases the placement. |
+| FR-CAMP-07 | Refunds and credits for campaigns are recorded with reasons and approvals (Section 7.3). |
+
+### 17.4 Ad delivery engine (ADD)
+| ID | Requirement |
+|---|---|
+| FR-ADD-01 | A public ad-serve endpoint takes the page, slot, device and visitor location (state and city from IP or the page context). It returns eligible creatives: active, paid, approved, within dates, with budget or impression limit remaining, matching targeting, and under the frequency cap. |
+| FR-ADD-02 | Eligible campaigns rotate fairly, weighted by priority, with exclusive reservations honoured. Rejected, unpaid, paused or expired campaigns are never served. |
+| FR-ADD-03 | Impressions are recorded when the creative is in view, through a signed, one-time impression token. Clicks go through a server redirect (`/ad/click/:token`) that records the click and then redirects to the destination URL. |
+| FR-ADD-04 | Duplicate and suspicious events are filtered: one impression per token, per-IP and per-session rate limits, bot user-agent filtering, and click deduplication within a configurable window. CPC and CPM spend is charged only for valid events. |
+| FR-ADD-05 | Analytics for advertisers (impressions, clicks, CTR, spend, remaining budget, by day, slot, page, state and device) come from hourly aggregates. |
+
+---
+
+## 18. Functional Requirements: Super Admin, Departments, Geography and CMS (requirement doc §4)
+
+### 18.1 User management (SAU)
+| ID | Requirement |
+|---|---|
+| FR-SAU-01 | The Super Admin is the highest authority. The first Super Admin is created securely at deployment through the CLI (`cli:create-admin`). There is no public Super Admin registration. |
+| FR-SAU-02 | The Super Admin can view all users, search by user ID, mobile or email, filter by role, state and city, and create, edit, approve, reject, suspend and reactivate users. They can also block login, reset account access and view account history (audit log). |
+
+### 18.2 Departments and scoped permissions (DEP)
+| ID | Requirement |
+|---|---|
+| FR-DEP-01 | Admins manage departments. The seeded list is Recruitment, HR, Operations, Sales, Client Relations, Finance, Advertising, Customer Support, Legal/Compliance and IT/System Administration. Admin users belong to one or more departments. |
+| FR-DEP-02 | A role assignment can be scoped to a department, a **state** or a **city**, in addition to the existing platform, company and vendor scopes. A scoped admin sees only records in that state or city: technicians, clients, requirements, projects and reports. |
+| FR-DEP-03 | Financial access, document access and data exports are separate permissions. They can be withheld from a role regardless of its other rights. |
+| FR-DEP-04 | Permission changes take effect immediately. The permission cache is invalidated on change, and authorisation is checked on every request. |
+| FR-DEP-05 | No admin can access data beyond their assigned permissions unless explicitly authorised. |
+
+### 18.3 Geography masters (GEO)
+| ID | Requirement |
+|---|---|
+| FR-GEO-01 | Admins manage all Indian states and union territories (each with its GST state code), districts, cities and PIN codes. |
+| FR-GEO-02 | Admins assign city managers and HR staff to locations, through scoped role assignments. |
+| FR-GEO-03 | Addresses across the platform reference the geography masters, so manpower can be filtered by location and reports can be grouped by city. |
+
+### 18.4 Website CMS (CMS)
+| ID | Requirement |
+|---|---|
+| FR-CMS-01 | The Super Admin manages the home page, About Us, Services, categories, city pages, industry pages, advertiser information, contact details, FAQs, terms and conditions, privacy policy, header, footer, navigation, SEO metadata, and images and banners. |
+| FR-CMS-02 | Page content is stored in the database as structured blocks (hero, rich text, card grid, FAQ list, CTA, ad slot). Pages have draft and published versions, a slug and SEO fields. |
+| FR-CMS-03 | Rich text is sanitised on save and render, and there is no raw HTML injection. Media is served through the CDN. |
+
+### 18.5 Business reports (RPT, extended)
+| ID | Report |
+|---|---|
+| FR-RPT-09 | Employee registrations, approved employees and active manpower. |
+| FR-RPT-10 | Client registrations, requirements received, quotations sent and accepted, and projects active. |
+| FR-RPT-11 | Employee deployment and attendance. |
+| FR-RPT-12 | Revenue, outstanding invoices, employee payouts (payroll) and vendor payments. |
+| FR-RPT-13 | Advertising revenue and campaign performance. |
+| FR-RPT-14 | Performance by state and by city across all of the above. |
+
+---
+
+## 19. Website Structure, Acceptance and Handover (requirement doc §10, §14, §16, §17, §18)
+
+### 19.1 Public pages and portals (WEB)
+| ID | Requirement |
+|---|---|
+| FR-WEB-01 | **Public pages:** Home, About Us, Our Services, Technical Manpower, Electrical, Plumbing, HVAC, Civil and Mechanical Services, Industrial Manpower, Industries We Serve, Locations / Cities, Hire Manpower, Register as Technician, Register as Vendor, Advertise With Us, Advertiser Registration, Contact Us, FAQs, Privacy Policy, and Terms and Conditions. All are rendered from the CMS. |
+| FR-WEB-02 | **Login portals:** Employee, Client, Vendor, Advertiser and Admin. After login, each user is sent to the correct dashboard for their role (`/app` resolves the home portal). |
+| FR-WEB-03 | **UI/UX:** a professional corporate, industrial look; clean typography; simple step-by-step forms; responsive dashboards; mobile-first employee experience; search and filters; paginated tables; charts; status badges; confirmation dialogs; validation; useful empty states; loading indicators; and clear errors. Employee registration must be easy to complete on a smartphone. |
+
+### 19.2 Additional business rules (from requirement doc §18)
+| ID | Rule |
+|---|---|
+| BR-WO-01 | Every deployment (assignment) has a valid commercial record: an accepted quotation and an active work order. |
+| BR-FIN-06 | Employee wage rates and client billing rates are stored separately. Client-specific rates are configurable. |
+| BR-ADV-01 | No unapproved campaign is published, and no unpaid campaign goes live. |
+| BR-ADV-02 | Ad package prices are configuration, never code. |
+| BR-GOV-01 | Government and private projects can have different documentation and approval requirements, configured per project type. |
+| BR-OPS-01 | The company keeps control of the client relationship and the deployment process. Clients cannot contact or engage employees directly through the platform. |
+| BR-AUD-01 | All important actions are logged, every financial transaction is traceable, and authorised users can export data. |
+
+### 19.3 Final acceptance criteria (requirement doc §16)
+The project is accepted only when all of the following pass in UAT. Status is as of 2026-11-18.
+
+| # | Criterion | Status |
+|---|---|---|
+| AC-01 | Employees can register independently | Partial: onboarding exists; the declaration step and Employee ID are pending |
+| AC-02 | HR can verify and activate employee profiles | Built (registration review) |
+| AC-03 | Clients can register and submit requirements | Built (companies and enquiries); extended fields pending |
+| AC-04 | Admin can create and send quotations | Built |
+| AC-05 | Clients can approve quotations | Built; revision request pending |
+| AC-06 | Work orders can be generated | New |
+| AC-07 | HR can allocate verified employees | Phase 5 |
+| AC-08 | Employees can access assignments | Phase 5 |
+| AC-09 | Attendance is recorded and approved | Phase 6 |
+| AC-10 | Payroll and client billing work independently | Phase 7 |
+| AC-11 | Clients can view invoices and payments | Phase 7 |
+| AC-12 | Advertisers can register | Phase 8 |
+| AC-13 | Advertisers can select available ad spaces | Phase 8 |
+| AC-14 | Advertisers can pay online | Phase 8 |
+| AC-15 | Admin can approve campaigns | Phase 8 |
+| AC-16 | Ads activate and expire automatically | Phase 8 |
+| AC-17 | Dynamic ad spaces work on all configured pages | Phases 8–9 |
+| AC-18 | Advertisers can view campaign analytics | Phase 8 |
+| AC-19 | Super Admin controls all users, permissions and modules | Partial: departments and geo scopes in Phase 10 |
+| AC-20 | Data is protected with proper access control | Built for existing modules; enforced for each new module |
+| AC-21 | All dashboards display actual database records | Admin, company and provider dashboards still have placeholders |
+| AC-22 | All modules work on desktop and mobile | Ongoing |
+| AC-23 | Complete source code and documentation are delivered | Phase 11 |
+
+### 19.4 Handover (requirement doc §17)
+The following are handed over:
+- frontend and backend source code
+- database schema and index sync scripts (MongoDB has no migrations; the equivalent is the `db:sync-indexes` command plus data migration scripts)
+- API documentation (OpenAPI at `/api/docs` and `docs/API.md`)
+- admin credentials, through a secure handover process
+- environment configuration documentation (`.env.example`)
+- deployment scripts (`infra/`)
+- payment gateway and third-party integration documentation
+- test cases and reports
+- backup and restore instructions
+- production deployment access
+- source code and IP rights as agreed in the contract
+
+All third-party, hosting, API and maintenance costs must be disclosed separately. No hidden recurring service dependency is added without client approval.
+
+---
+
+## 20. Requirement Document Traceability and Open Items
+
+### 20.1 Traceability to `bijli wala .docx`
+| Requirement document section | SRS coverage | Status |
+|---|---|---|
+| §1 Project objective | 1.1, 1.2 | — |
+| §2 Business modules A/B/C | 1.2, 4.4, 14, 15, 17 | A partial, B partial, C new |
+| §3 User type 1: Employee / Technician | 4.1–4.7, 14 | Partial |
+| §3 User type 2: Corporate client | 5, 15 | Partial |
+| §3 User type 3: Advertiser | 17.1, 17.3 | New |
+| §4 Super Admin | 3.2, 18 | Partial |
+| §5 Dynamic ad engine | 17.2–17.4 | New |
+| §6 Manpower operations | 6, 15.3 | Phase 5 |
+| §7 Attendance and payroll | 6.7, 16.1, 16.2 | Phases 6–7 |
+| §8 Payment management | 7, 16.3 | Partial (registration payments built) |
+| §9 Notification engine | 8.1 (+ push channel) | Partial (console adapters only) |
+| §10 Website structure | 19.1 | Partial |
+| §11 Database | DATABASE.md | Mapped to MongoDB |
+| §12 Technical architecture | 2.3, ARCHITECTURE.md | Deviation recorded |
+| §13 Security and compliance | 10.3, 10.4, 18.2 | Built for existing modules |
+| §14 UI/UX | 10.7, FR-WEB-03 | Ongoing |
+| §15 Milestones | DEVELOPMENT_PLAN.md | Re-planned |
+| §16 Acceptance criteria | 19.3 | Tracked |
+| §17 Handover | 19.4 | Phase 11 |
+| §18 Commercial and business rules | 9, 19.2 | — |
+| §19 Recommendation (approve UI, ER, workflows and commercial proposal first; phase the work, but design the DB for the whole platform) | DEVELOPMENT_PLAN.md preamble | — |
+
+### 20.2 Open items
+| # | Item | Proposed default |
+|---|---|---|
+| O-01 | SEO for CMS-driven public pages on a Vite SPA | Prerender public CMS routes at build time and on publish, served by Nginx, with server-generated sitemap and meta tags. Revisit SSR if needed. |
+| O-02 | Does a technician registration fee still apply? | Configurable per plan; a zero-fee plan skips payment (FR-TEC-08). |
+| O-03 | Push notifications | Web push (VAPID) for the employee PWA; native push when mobile apps arrive. |
+| O-04 | Can the client see proposed candidates before deployment? | Masked profiles (skills, experience, badges) before confirmation. |
+| O-05 | Ad click fraud thresholds | Configurable; defaults of 1 click per IP per creative per 30 minutes and 20 impressions per IP per hour per slot. |
+| O-06 | Statutory payroll deductions (PF, ESI, TDS) | Recorded as configurable deduction types. Statutory filing is out of scope. |
+| O-07 | Vendor portal | Uses the existing provider portal for Vendor Admins, with a separate "Vendor Portal" login entry on the website. |

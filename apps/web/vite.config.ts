@@ -10,7 +10,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       // Consume the shared contracts from source so Vite treats them as ESM (ARCHITECTURE D-01).
-      '@skillconnect/contracts': contractsSrc,
+      '@bijliwala/contracts': contractsSrc,
     },
   },
   server: {

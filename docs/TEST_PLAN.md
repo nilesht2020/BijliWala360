@@ -1,10 +1,10 @@
-# SkillConnect — Test Plan
+# Bijli Wala — Test Plan
 
 | Field | Value |
 |---|---|
-| Version | 0.1 (Proposed) |
-| Date | 2026-11-13 |
-| Source | `SRS.md` v1.0, `ARCHITECTURE.md`, `DATABASE.md`, `API.md` |
+| Version | 0.2 (Proposed) |
+| Date | 2026-11-18 |
+| Source | `SRS.md` v2.0 (including the acceptance criteria in §19.3, from `bijli wala .docx` §16), `ARCHITECTURE.md`, `DATABASE.md`, `API.md` |
 
 ---
 
@@ -186,7 +186,56 @@ Cases:
 - **OBX-01:** a transaction that aborts leaves no outbox event. A relay crash after publishing but before marking the event dispatched causes a redelivery, which the consumer deduplicates.
 
 ### 3.12 State Machines (unit, generated)
-For each lifecycle (provider, worker, document, enquiry, quotation, job, invitation, proposal, assignment, invoice, payment, cheque, refund, complaint), iterate over **all (state × event) pairs**. Allowed pairs produce the expected next state; every other pair raises `INVALID_STATE_TRANSITION`. An integration sample checks that the persistence layer's conditional update returns 409 when the state is stale.
+For each lifecycle, iterate over **all (state × event) pairs**. The lifecycles are provider, worker, document, enquiry, quotation, job, invitation, proposal, assignment, invoice, payment, cheque, refund and complaint. **v2 adds** work order, payroll run, advertiser, campaign and CMS page. Allowed pairs produce the expected next state; every other pair raises `INVALID_STATE_TRANSITION`. An integration sample checks that the persistence layer's conditional update returns 409 when the state is stale.
+
+### 3.13 Technician registration and client booking (v2)
+- **TEC-01:** submitting without all declarations returns `DECLARATION_MISSING`. A stale policy version returns `POLICY_VERSION_STALE`.
+- **TEC-02:** `employeeNo` values are unique and sequential when 50 technicians submit concurrently.
+- **TEC-03:** a zero-fee plan goes straight from `SUBMITTED` to `PENDING_VERIFICATION`, with no payment record.
+- **CLR-01:** a revision request moves the quotation to `REVISION_REQUESTED`. The admin's revision supersedes it, and the client can accept only the latest version.
+- **CLD-01 (IDOR):** client A gets 404 for client B's requirements, quotations, work orders, projects, assigned employees, attendance, invoices and payments.
+- **WO-01:** allocation approval on a job whose work order is unsigned returns `WORK_ORDER_NOT_SIGNED` (BR-WO-01).
+
+### 3.14 Payroll and billing separation (v2)
+- **PAY-01:** two payroll runs over overlapping periods, fired concurrently. Each attendance day is paid exactly once (`payrollRunId` conditional), and the loser gets `ATTENDANCE_ALREADY_PAID` or `PAYROLL_PERIOD_OVERLAP`.
+- **PAY-02:** payroll calculation inputs never contain `billRate`. A contract test on the read-model DTO enforces this, and changing billing rates leaves payroll totals unchanged (AC-10).
+- **PAY-03:** the payroll preparer cannot approve their own run (`MAKER_CHECKER_VIOLATION`).
+- **PAY-04:** vendor-worker lines are payable to the vendor, with a per-worker breakdown.
+- **PAY-05:** table-driven unit tests for `computePayrollLine` cover half day, overtime, leave, allowances, deductions and rounding.
+
+### 3.15 Advertising (v2)
+- **ADV-01:** a campaign is never served unless it is `ACTIVE`. Test every other status, plus an unpaid but approved campaign, and confirm `/public/ads` returns 204 (BR-ADV-01).
+- **ADV-02:** a browser-side "payment success" without a webhook leaves the campaign `PAYMENT_PENDING`. After a valid webhook it becomes `SCHEDULED`, and a duplicate webhook is a no-op.
+- **ADV-03:** the scheduler activates the campaign at `startAt`, expires it at `endAt`, and sets `BUDGET_EXHAUSTED` when `spentPaise` reaches the budget. Inventory is released in each case. Tests use a fake clock.
+- **ADV-04:** concurrent approvals for an exclusive slot over overlapping dates. Exactly one wins and the other gets `SLOT_EXCLUSIVE_CONFLICT`. Capacity is never exceeded.
+- **ADV-05:** replaying an impression or click token counts once. Bot user agents and rate-limited IPs are recorded as `valid: false`. CPC and CPM spend is computed only from valid events, and it never exceeds the budget under concurrent roll-ups.
+- **ADV-06:** a creative with the wrong dimensions, a spoofed MIME type or an `http:`, internal or blocklisted destination URL is rejected.
+- **ADV-07:** targeting. A state- or city-targeted campaign is not served outside its locations, and device targeting is honoured.
+- **ADV-08:** package prices come only from `ad_packages`. A test changes a price and confirms new campaigns use it while existing campaigns keep their snapshot.
+
+### 3.16 Departments, geo scopes and CMS (v2)
+- **SCP-01:** an HR admin scoped to Maharashtra sees only Maharashtra technicians and clients in lists, details (404 otherwise), reports and exports.
+- **SCP-02:** removing a permission takes effect on the next request, with no re-login needed (`permVersion`).
+- **SCP-03:** a role without `*.export` or `document.download` gets 403, even with broad read permissions.
+- **CMS-01:** a draft edit is not visible publicly until publish. Publish increments the version and invalidates the cache.
+- **CMS-02:** script tags, event handlers and `javascript:` URLs are stripped from rich text on save and on render.
+
+---
+
+## 3A. Acceptance Criteria Coverage (requirement document §16)
+Each acceptance criterion in SRS §19.3 maps to at least one automated test and one UAT script:
+
+| AC | Automated coverage |
+|---|---|
+| AC-01, AC-02 | E2E-01, E2E-09, TEC-01–03 |
+| AC-03 – AC-06 | E2E-03, CLR-01, WO-01 |
+| AC-07, AC-08 | E2E-04, ALC suite (3.1) |
+| AC-09 | E2E-05, 3.10 |
+| AC-10, AC-11 | PAY-01–05, E2E-05, E2E-10 |
+| AC-12 – AC-18 | ADV-01–08, E2E-11 |
+| AC-19, AC-20 | SCP-01–03, 3.8 |
+| AC-21 | Dashboard smoke tests assert data comes from the API (no static fixtures in production builds) |
+| AC-22 | All E2E journeys at 360 px and desktop |
 
 ---
 
@@ -201,6 +250,11 @@ For each lifecycle (provider, worker, document, enquiry, quotation, job, invitat
 | E2E-06 | Offline business payment with proof → maker-checker verify → partial refund → reconciliation run shows the match | Company, Admin |
 | E2E-07 | Complaint raised by the company → support resolves → provider score updated | Company, Admin |
 | E2E-08 | Replacement of an assigned worker | Admin, Provider |
+| E2E-09 | **v2:** technician completes the six-step wizard on a phone → Employee ID shown → HR requests documents → technician re-uploads → approved | Public, Provider (mobile), Admin |
+| E2E-10 | **v2:** approved attendance → payroll run → second admin approves → mark paid → payslip visible to the employee; client invoice for the same period is generated independently | Admin ×2, Provider, Company |
+| E2E-11 | **v2:** advertiser registers → admin approves → campaign wizard → admin approves → Razorpay fake checkout + webhook → campaign scheduled → goes live on the targeted page → impressions and clicks appear in analytics → campaign expires | Public, Advertiser, Admin |
+| E2E-12 | **v2:** Super Admin creates a city-scoped HR role, assigns it, and the user sees only that city's data | Admin ×2 |
+| E2E-13 | **v2:** CMS page edited, previewed and published → public page and sitemap updated | Admin, Public |
 
 Each journey also runs at a 360 px viewport for its provider and company steps, with an axe accessibility scan on every page visited.
 

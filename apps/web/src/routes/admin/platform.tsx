@@ -11,7 +11,7 @@ import {
   type NotificationChannel,
   type NotificationTemplateInput,
   type NotificationTemplateView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useCan } from '@/app/auth';
 import { EmptyState, PageHeader } from '@/components/layout/page-parts';
 import { Button } from '@/components/ui/button';

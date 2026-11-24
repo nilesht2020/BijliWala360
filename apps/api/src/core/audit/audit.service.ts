@@ -1,7 +1,7 @@
 import { Global, Injectable, Module } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types, type ClientSession, type FilterQuery, type Model } from 'mongoose';
-import type { AuditLogView, AuditQuery, CursorMeta } from '@skillconnect/contracts';
+import type { AuditLogView, AuditQuery, CursorMeta } from '@bijliwala/contracts';
 import { DomainError } from '../errors/domain-error';
 import type { AuthUser } from '../auth/auth.types';
 import { AUDIT_MODEL, type AuditDoc } from '../database/core.schemas';

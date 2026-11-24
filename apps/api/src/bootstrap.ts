@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
-import { IDEMPOTENCY_HEADER, REQUEST_ID_HEADER } from '@skillconnect/contracts';
+import { APP_NAME, IDEMPOTENCY_HEADER, REQUEST_ID_HEADER } from '@bijliwala/contracts';
 import { AppConfig } from './core/config/app-config';
 
 export const API_PREFIX = 'api/v1';
@@ -44,7 +44,7 @@ export function setupSwagger(app: INestApplication): void {
   const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle('SkillConnect API')
+      .setTitle(`${APP_NAME} API`)
       .setDescription(
         'B2B service marketplace REST API. All responses use the `{ success, data, meta }` / `{ success: false, error }` envelope. ' +
           'Money is integer paise. Endpoints marked idempotent require an `Idempotency-Key` header.',

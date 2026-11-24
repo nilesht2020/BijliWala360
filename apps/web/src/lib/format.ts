@@ -1,4 +1,4 @@
-import { formatPaise } from '@skillconnect/contracts';
+import { formatPaise } from '@bijliwala/contracts';
 
 export const DISPLAY_TIME_ZONE = 'Asia/Kolkata';
 

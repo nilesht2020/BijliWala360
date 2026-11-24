@@ -7,7 +7,7 @@ import {
   type FieldValues,
   type UseFormSetError,
 } from 'react-hook-form';
-import type { ApiErrorDetail } from '@skillconnect/contracts';
+import type { ApiErrorDetail } from '@bijliwala/contracts';
 import { Label } from '@/components/ui/primitives';
 import { ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';

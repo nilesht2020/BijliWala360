@@ -6,7 +6,7 @@ import {
   type Permission,
   type RoleView,
   type ScopeType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { ConfirmDialog } from '@/components/layout/confirm-dialog';
 import { PageHeader } from '@/components/layout/page-parts';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type request from 'supertest';
-import { REFRESH_COOKIE, type AuthStepResponse, type SelfSignupUserType } from '@skillconnect/contracts';
+import { REFRESH_COOKIE, type AuthStepResponse, type SelfSignupUserType } from '@bijliwala/contracts';
 import {
   EMAIL_PROVIDER,
   SMS_PROVIDER,

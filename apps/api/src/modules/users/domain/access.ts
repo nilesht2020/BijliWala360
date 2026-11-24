@@ -5,7 +5,7 @@ import {
   type RoleScopeInput,
   type ScopeType,
   type UserType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { ResolvedAccess, RoleScope } from '../../../core/auth/auth.types';
 
 /** Role code that always carries every permission, including ones added after it was seeded. */

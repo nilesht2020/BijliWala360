@@ -6,7 +6,7 @@ import {
   type JobPositionInput,
   type JobStatus,
   type Shift,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { DomainError } from '../../core/errors/domain-error';
 
 /** Embedded position (DATABASE §9 `jobs.positions`). `available = required - held - confirmed`. */

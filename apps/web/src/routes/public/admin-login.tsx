@@ -10,7 +10,7 @@ import {
   type AdminLoginInput,
   type AuthStepResponse,
   type MfaEnrollmentResponse,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useAuth } from '@/app/auth';
 import { FormField } from '@/components/forms/form-field';
 import { OtpInput } from '@/components/forms/inputs';

@@ -10,7 +10,7 @@ import {
   type InboxItem,
   type NotificationPreferences,
   type NotificationTemplateView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, Public, RequirePermissions } from '../../core/auth/decorators';

@@ -114,7 +114,7 @@ export const BUSINESS_CONFIG = {
       stateCode: z.string().regex(/^\d{2}$/),
       address: z.string().min(2).max(300),
     }),
-    { legalName: 'SkillConnect Services Pvt Ltd', gstin: '', stateCode: '27', address: 'Pune, Maharashtra' },
+    { legalName: 'Bijli Wala Services Pvt Ltd', gstin: '', stateCode: '27', address: 'Pune, Maharashtra' },
   ),
   'tax.defaultGstRateBp': def(
     'Tax & billing',

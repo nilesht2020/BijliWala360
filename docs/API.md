@@ -1,11 +1,11 @@
-# SkillConnect — REST API Contract
+# Bijli Wala — REST API Contract
 
 | Field | Value |
 |---|---|
-| Version | 0.2 (Phase 2 implemented: Auth, Users & RBAC, Audit, Settings, Notifications) |
+| Version | 0.3 (Phases 1–4 implemented; v2 endpoints from the Bijli Wala requirement document designed in §4.26–4.35) |
 | Base URL | `/api/v1` |
 | Swagger | `/api/docs` (generated from the `packages/contracts` Zod schemas) |
-| Source | `SRS.md` v1.0, `ARCHITECTURE.md` v0.1, `DATABASE.md` v0.1 |
+| Source | `SRS.md` v2.0, `ARCHITECTURE.md` v0.2, `DATABASE.md` v0.3 |
 
 ---
 
@@ -69,6 +69,12 @@ Defined in `packages/contracts/permissions.ts`. ⓢ marks a permission that is a
 | Execution | `attendance.mark` ⓢ, `attendance.proxy` ⓢ, `attendance.review` ⓢ, `attendance.correct`, `complaint.create` ⓢ, `complaint.manage`, `rating.create` ⓢ |
 | Finance | `invoice.read` ⓢ, `invoice.manage`, `payment.create` ⓢ, `payment.record_offline` ⓢ, `payment.verify`, `payment.read` ⓢ, `refund.request`, `refund.approve`, `reconciliation.manage`, `ledger.read` |
 | Reports | `report.read`, `report.export` |
+| Work orders (v2) | `work_order.read` ⓢ, `work_order.manage`, `work_order.sign` ⓢ |
+| Payroll (v2) | `payroll.read`, `payroll.prepare`, `payroll.approve`, `payroll.pay` |
+| Geography and departments (v2) | `geo.manage`, `department.manage` |
+| Advertising (v2) | `advertiser.manage` ⓢ, `campaign.read` ⓢ, `campaign.manage` ⓢ, `campaign.pay` ⓢ, `advertiser.review`, `campaign.review`, `ad.slot.manage`, `ad.package.manage`, `ad.finance.read` |
+| CMS (v2) | `cms.manage`, `cms.publish` |
+| Sensitive families (v2) | `document.download`, `*.export`. These are never implied by other permissions (ARCHITECTURE §11.1). |
 
 **Seeded roles:**
 - `SUPER_ADMIN`: all permissions.
@@ -79,6 +85,13 @@ Defined in `packages/contracts/permissions.ts`. ⓢ marks a permission that is a
 - `FINANCE_APPROVER`: `refund.approve`.
 - `SUPPORT_AGENT`: complaints and read access.
 - `COMPANY_ADMIN` ⓢ, `COMPANY_USER` ⓢ, `PROFESSIONAL` ⓢ, `VENDOR_ADMIN` ⓢ, `VENDOR_WORKER` ⓢ.
+- **v2:**
+  - `ADVERTISER_ADMIN` ⓢ, `ADVERTISER_USER` ⓢ.
+  - `AD_MANAGER`: advertiser and campaign review, slots and packages.
+  - `PAYROLL_ADMIN`: `payroll.prepare` and `payroll.pay`.
+  - `PAYROLL_APPROVER`: `payroll.approve`.
+  - `CMS_EDITOR`: `cms.manage`.
+  - Department templates (HR, Recruitment, Sales and the others) are seeded as editable custom roles.
 
 ---
 
@@ -103,6 +116,11 @@ Defined in `packages/contracts/permissions.ts`. ⓢ marks a permission that is a
 | `ASSIGNMENT_NOT_ACTIVE`, `ATTENDANCE_ALREADY_MARKED`, `CHECKOUT_BEFORE_CHECKIN` | Execution failures |
 | `INVOICE_NOT_PAYABLE`, `AMOUNT_EXCEEDS_BALANCE`, `DUPLICATE_PAYMENT_REFERENCE`, `MAKER_CHECKER_VIOLATION` (403), `REFUND_EXCEEDS_CAPTURED`, `PAYMENT_NOT_REFUNDABLE` | Finance failures |
 | `WEBHOOK_SIGNATURE_INVALID` (401) | Webhook failures |
+| `DECLARATION_MISSING`, `POLICY_VERSION_STALE` | Technician submission failures (v2) |
+| `WORK_ORDER_NOT_SIGNED`, `WORK_ORDER_LOCKED` | Deployment and allocation blocked by BR-WO-01 (v2) |
+| `PAYROLL_PERIOD_OVERLAP`, `ATTENDANCE_ALREADY_PAID`, `PAYROLL_NOT_APPROVED` | Payroll failures (v2) |
+| `ADVERTISER_NOT_APPROVED`, `SLOT_UNAVAILABLE`, `SLOT_EXCLUSIVE_CONFLICT`, `CREATIVE_INVALID_DIMENSIONS`, `CREATIVE_URL_NOT_ALLOWED`, `CAMPAIGN_NOT_PAYABLE`, `CAMPAIGN_DATES_INVALID`, `BUDGET_BELOW_MINIMUM` | Advertising failures (v2) |
+| `SLUG_TAKEN`, `CMS_BLOCK_INVALID` | CMS failures (v2) |
 
 ---
 
@@ -136,6 +154,8 @@ Every sign-in step returns `AuthStepResponse`: `AUTHENTICATED {accessToken, expi
 |---|---|---|---|
 | GET | `/public/categories?tree&level` · `/public/categories/:slug` · `/public/skills?categoryId` | 🔓 | The category detail includes breadcrumbs, child categories and skills. Inactive branches are hidden. |
 | GET/POST/PATCH | `/admin/categories[/:id]` · `/admin/skills[/:id]` | `category.manage` / `skill.manage` | A 4th level is refused with `CATEGORY_DEPTH_EXCEEDED`. |
+| DELETE | `/admin/categories/:id` | `category.manage` | Hard delete, audited (`category.delete`). Refused with `CATEGORY_IN_USE` (422) while the category has sub-categories or skills, or is referenced by professionals, vendors, enquiries or jobs (FR-CAT-04); hide it with `isActive=false` instead. Returns `{ id, deleted: true }`. |
+| DELETE | `/admin/skills/:id` | `skill.manage` | Hard delete, audited (`skill.delete`). Refused with `SKILL_IN_USE` (422) while the skill is referenced by professionals, vendor workers, enquiries, quotations or jobs; deactivate it with PATCH `isActive=false` instead. Returns `{ id, deleted: true }`. |
 | GET | `/public/registration-plans?providerType` · GET/POST/PATCH `/admin/registration-plans[/:id]` | 🔓 / `plan.manage` | PATCH supports `If-Match`. |
 | GET | `/documents/types` · POST `/documents/upload-intent` · POST `/documents/:id/complete` · GET `/documents?ownerType&ownerId` · GET `/documents/:id/download-url` | auth / `document.upload` / `document.read` | `complete` checks the file and returns `UPLOADED`, `REJECTED_TYPE` or `REJECTED_MALWARE`. |
 | POST | `/admin/documents/:id/review` · GET/PUT `/admin/document-types` | `document.verify` / `doctype.manage` | |
@@ -166,6 +186,11 @@ Every sign-in step returns `AuthStepResponse`: `AUTHENTICATED {accessToken, expi
 | PATCH | `/me` `{name}` | auth |
 | POST | `/admin/users/:id/mfa/reset` | `user.manage` |
 
+### 4.2a Admin dashboard
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/admin/dashboard/work-queue` | platform users → `{items:[{key, count, oldestAt?}], generatedAt}`. Returns only the queues the caller's permissions cover (e.g. `REGISTRATIONS_TO_VERIFY` needs `registration.verify`, `OFFLINE_PAYMENTS_TO_VERIFY` needs `payment.verify`). Read-only counts; the keys are `WORK_QUEUE_KEYS` in contracts. |
+
 ### 4.3 Business Config, Audit, Health
 | Method | Path | Permission |
 |---|---|---|
@@ -179,7 +204,7 @@ Every sign-in step returns `AuthStepResponse`: `AUTHENTICATED {accessToken, expi
 |---|---|---|
 | GET | `/public/categories?tree=true` · `/public/categories/:slug` | 🔓 (cached) |
 | GET | `/public/skills?categoryId` | 🔓 |
-| GET/POST | `/admin/categories` · PATCH `/admin/categories/:id` · POST `/admin/categories/:id/deactivate` | `category.manage` |
+| GET/POST | `/admin/categories` · PATCH `/admin/categories/:id` · DELETE `/admin/categories/:id` (unused only) · POST `/admin/categories/:id/deactivate` | `category.manage` |
 | GET/POST | `/admin/skills` · PATCH `/admin/skills/:id` | `skill.manage` |
 
 ### 4.5 Documents
@@ -188,7 +213,7 @@ Every sign-in step returns `AuthStepResponse`: `AUTHENTICATED {accessToken, expi
 | POST | `/documents/upload-intent` | `document.upload` ⓢ. `{typeCode, owner:{type,id}, fileName, mime, sizeBytes, number?, expiresOn?}` → `{documentId, uploadUrl, headers, expiresAt}` |
 | POST | `/documents/:id/complete` | `document.upload` ⓢ → 202 `{status:'SCANNING'}` |
 | GET | `/documents/:id` | `document.read` ⓢ |
-| GET | `/documents/:id/download-url` | `document.read` ⓢ → `{url, expiresAt}` (60 s). The access is audited for sensitive types. |
+| GET | `/documents/:id/download-url` | `document.read` ⓢ → `{url, expiresAt, mime, fileName}` (60 s). The URL serves the file `inline` so the web app shows it in its document viewer. The access is audited for sensitive types. |
 | GET | `/documents?ownerType&ownerId&typeCode` | `document.read` ⓢ |
 | POST | `/admin/documents/:id/review` | `document.verify`. `{decision:'VERIFIED'|'REJECTED', comment?}` |
 | GET/POST/PATCH | `/admin/document-types[/:id]` | `doctype.manage` |
@@ -413,6 +438,97 @@ All `/admin/*` routes in §4.10–4.13 are platform-only (`@PlatformOnly`): a co
 | POST | `/admin/reports/:reportCode/exports` `{filters, format}` | `report.export` → 202 `{exportId}` |
 | GET | `/admin/report-exports/:id` | `report.export` → `{status, downloadUrl?}` |
 | GET | `/dashboard/summary` | auth (KPI cards specific to the role) |
+
+### 4.26 Technician registration additions (v2, SRS §14)
+| Method | Path | Permission |
+|---|---|---|
+| PUT | `/professionals/me/qualifications` · `/me/experience` · `/me/work-preferences` · `/me/emergency-contact` | `profile.self` ⓢ |
+| GET | `/public/policies/current` (terms, privacy, verification consent, deployment policy, with versions) | 🔓 |
+| POST | `/professionals/me/declarations` `{codes[], policyVersions}` | `profile.self` ⓢ (IP and user agent captured on the server) |
+| GET | `/professionals/me/payslips` · `/me/earnings?from&to` | `profile.self` ⓢ |
+| GET | `/admin/technicians?status&categoryId&stateId&cityId&q` (professionals and vendor workers together, by `employeeNo`) | `provider.read` (geo-scoped) |
+
+### 4.27 Client requirement and quotation additions (v2, SRS §15)
+| Method | Path | Permission |
+|---|---|---|
+| POST/PATCH | `/enquiries` (extended project, manpower, commercial and document fields) | `enquiry.create` ⓢ |
+| POST | `/quotations/:id/revision-request` `{reason}` 🔁 | `quotation.decide` ⓢ |
+| GET/POST | `/quotations/:id/comments` (clarification thread) | `quotation.decide` ⓢ / `quotation.manage` |
+| GET | `/jobs/:id/proposed-candidates` (masked per privacy settings) | `job.read` ⓢ |
+| GET | `/jobs/:id/operations?date` (assigned, present, absent, late, pending approval, replacements) | `job.read` ⓢ |
+
+### 4.28 Work orders (v2)
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/admin/work-orders?status&companyId` · `/admin/work-orders/:id` | `work_order.read` |
+| PATCH | `/admin/work-orders/:id` (DRAFT only) | `work_order.manage` |
+| POST | `/admin/work-orders/:id/issue` 🔁 · `/amend` · `/cancel` `{reason}` | `work_order.manage` |
+| GET | `/work-orders` · `/work-orders/:id` · `/work-orders/:id/pdf-url` | `work_order.read` ⓢ |
+| POST | `/work-orders/:id/sign` 🔁 | `work_order.sign` ⓢ |
+
+### 4.29 Leave and payroll (v2, SRS §16)
+| Method | Path | Permission |
+|---|---|---|
+| POST | `/leave-requests` · GET `/leave-requests/mine` | `attendance.mark` ⓢ |
+| POST | `/admin/leave-requests/:id/approve` · `/reject` | `attendance.correct` |
+| POST | `/admin/payroll-runs` `{periodFrom, periodTo, scope}` 🔁 → 202 | `payroll.prepare` |
+| GET | `/admin/payroll-runs?status` · `/:id` · `/:id/lines` | `payroll.read` |
+| POST | `/admin/payroll-runs/:id/approve` 🔁 (maker ≠ checker) · `/cancel` | `payroll.approve` |
+| POST | `/admin/payroll-lines/:id/mark-paid` `{paidAt, transactionRef}` 🔁 · `/hold` | `payroll.pay` |
+| GET | `/vendors/me/payroll` (per-worker breakdown) | `vendor.manage` ⓢ |
+
+### 4.30 Geography and departments (v2, SRS §18)
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/public/geo/states` · `/public/geo/states/:id/districts` · `/public/geo/districts/:id/cities` · `/public/geo/pincodes/:pin` | 🔓 |
+| POST/PATCH | `/admin/geo/states[/:id]` · `/districts` · `/cities` · `/pincodes` · POST `/admin/geo/import` (CSV) | `geo.manage` |
+| GET/POST/PATCH | `/admin/departments[/:id]` | `department.manage` |
+| PUT | `/admin/users/:id/departments` `{departmentIds[]}` | `user.manage` |
+| POST | `/admin/users/:id/role-assignments` (scope now also accepts `{type:'STATE', stateIds}` / `{type:'CITY', cityIds}` and `departmentId`) | `role.manage` |
+
+### 4.31 Advertisers and campaigns (v2, SRS §17)
+| Method | Path | Permission |
+|---|---|---|
+| POST | `/advertisers/signup` (after OTP) | auth (new user) |
+| GET/PATCH | `/advertisers/me` | `advertiser.manage` ⓢ |
+| GET | `/advertisers/me/inventory?page&from&to` (slots with availability and package prices) | `campaign.manage` ⓢ |
+| POST/PATCH | `/campaigns[/:id]` (DRAFT or CHANGES_REQUIRED only) | `campaign.manage` ⓢ |
+| POST | `/campaigns/:id/creatives` (upload intent → complete, same flow as documents) | `campaign.manage` ⓢ |
+| GET | `/campaigns/:id/preview` (rendered slot previews) | `campaign.manage` ⓢ |
+| POST | `/campaigns/:id/submit` · `/pause` · `/resume` | `campaign.manage` ⓢ |
+| POST | `/campaigns/:id/payments/online` 🔁 → Razorpay order (amount computed on the server from the package snapshot and budget) | `campaign.pay` ⓢ |
+| GET | `/campaigns` · `/campaigns/:id` · `/campaigns/:id/stats?from&to&groupBy=day|slot|state|device` | `campaign.read` ⓢ |
+| GET | `/advertisers/me/invoices` · `/advertisers/me/payments` | `campaign.pay` ⓢ |
+
+### 4.32 Admin advertising (v2)
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/admin/advertisers?status` · POST `/admin/advertisers/:id/approve` · `/reject` · `/suspend` · `/reactivate` | `advertiser.review` |
+| GET/POST/PATCH | `/admin/ad-slots[/:id]` · POST `/:id/enable` · `/disable` · `/reserve` `{campaignId, from, to}` | `ad.slot.manage` |
+| GET/POST/PATCH | `/admin/ad-packages[/:id]` | `ad.package.manage` |
+| GET | `/admin/campaigns?status&advertiserId&slotId` | `campaign.review` |
+| POST | `/admin/campaigns/:id/approve` 🔁 · `/request-changes` `{notes}` · `/reject` `{reason}` · `/pause` · `/priority` `{priority}` | `campaign.review` |
+| POST | `/admin/campaigns/:id/creatives/:creativeId/replace` | `campaign.review` |
+| POST | `/admin/ad-payments/:id/refunds` 🔁 | `refund.request` (+ `refund.approve` above threshold) |
+| GET | `/admin/advertising/revenue?from&to&groupBy` | `ad.finance.read` |
+
+### 4.33 Public ad delivery (v2, no JWT)
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/public/ads?slot&page&device&cityId?` | 🔓 Returns `{creative, impressionToken, clickToken}` or `204` when no eligible campaign. Cached per slot and targeting key; rate limited. |
+| POST | `/public/ads/impression` `{token}` | 🔓 Valid once per token. Returns `204` even when the event is filtered, so nothing leaks to bots. |
+| GET | `/ad/click/:token` | 🔓 Records the click, then `302` to the destination URL. Outside `/api/v1`. |
+
+### 4.34 CMS (v2, SRS §18.4)
+| Method | Path | Permission |
+|---|---|---|
+| GET | `/public/cms/pages/:slug` · `/public/cms/menus/:key` · `/public/site` (contact, footer, SEO defaults) | 🔓 (ETag, CDN cached) |
+| GET/POST/PATCH | `/admin/cms/pages[/:id]` (draft blocks) · POST `/:id/publish` · `/unpublish` · GET `/:id/versions` | `cms.manage` (`cms.publish` for publish) |
+| GET/PUT | `/admin/cms/menus/:key` | `cms.manage` |
+| POST | `/admin/cms/media/upload-intent` · `/complete` · GET `/admin/cms/media` | `cms.manage` |
+
+### 4.35 Reports (v2 additions)
+Report codes added: `employee-registrations`, `active-manpower`, `client-pipeline` (requirements → quotations → projects), `deployment`, `revenue`, `payroll-summary`, `vendor-payments`, `advertising-revenue`, `campaign-performance`, `geo-performance` (state and city). All accept `stateId` and `cityId` filters, and results are geo-scoped automatically for scoped admins.
 
 ---
 

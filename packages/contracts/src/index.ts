@@ -1,3 +1,4 @@
+export * from './brand';
 export * from './common';
 export * from './enums';
 export * from './error-codes';
@@ -15,3 +16,4 @@ export * from './companies';
 export * from './tax';
 export * from './demand';
 export * from './jobs';
+export * from './dashboard';

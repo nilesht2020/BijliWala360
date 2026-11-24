@@ -1,10 +1,11 @@
-# SkillConnect — Architecture
+# Bijli Wala — Architecture
 
 | Field | Value |
 |---|---|
-| Version | 0.1 (Proposed, awaiting approval) |
-| Date | 2026-11-13 |
-| Source | `docs/SRS.md` v1.0. All Section 13 defaults are accepted. |
+| Version | 0.2 (Proposed, awaiting approval) |
+| Date | 2026-11-18 |
+| Source | `docs/SRS.md` v2.0 (based on `docs/bijli wala .docx`). All Section 13 defaults are accepted except A-01, which is superseded by payroll. Section 11 below covers the v2 modules. |
+| Stack | The current stack is kept: React (Vite), NestJS and MongoDB. The requirement document recommends Next.js and PostgreSQL; the reasons for not switching are in SRS §2.3. |
 | Related | `DATABASE.md`, `API.md`, `DEVELOPMENT_PLAN.md`, `TEST_PLAN.md` |
 
 ---
@@ -58,7 +59,7 @@ Module boundaries are enforced so that the system could later be split into serv
 The repository is a pnpm workspace monorepo.
 
 ```
-skillconnect/
+bijliwala/
 ├─ apps/
 │  ├─ api/                      # NestJS backend (api + worker entry points)
 │  │  ├─ src/
@@ -137,6 +138,13 @@ The modules marked ★ are not in the original module list. The SRS needs them, 
 | 23 | **Reports** | `report_exports` | Read models and aggregation pipelines, async exports | Read-only access to all modules through query services |
 | 24 | **Audit Logs** | `audit_logs` | Append-only audit trail and search | — |
 | ★ | **Business Config** | `business_settings` | Typed, versioned business configuration, Redis-cached | — |
+| v2 | **Geography** | `states`, `districts`, `cities`, `pin_codes` | Indian location masters; address references; location filters | — |
+| v2 | **Departments** | `departments` | Department master, user membership, department-scoped roles | Users |
+| v2 | **Work Orders** | `work_orders` | Work order generation from an accepted quotation, versioning, PDF, client sign-off | Quotations, Jobs, Companies |
+| v2 | **Payroll** | `payroll_runs`, `payroll_lines` | Wage calculation from approved attendance, maker-checker, payslips, PAYROLL ledger book | Assignments, Attendance, Ledger |
+| v2 | **Advertisers** | `advertisers` | Advertiser accounts, KYC, product categories | Users, Documents |
+| v2 | **Advertising** | `ad_slots`, `ad_packages`, `ad_campaigns`, `ad_creatives`, `ad_payments`, `ad_events`, `ad_stats_hourly` | Inventory, campaign lifecycle, creative validation, payment, delivery, analytics | Advertisers, CMS (pages), Payment Gateway, Ledger, Storage |
+| v2 | **CMS** | `cms_pages`, `cms_media`, `cms_menus` | Block-based pages, publishing, SEO, navigation, media | Storage, Geography (city pages) |
 
 ### 4.1 Payment Gateway and Ledger (shared financial core)
 Registration payments and business payments are separate modules with separate collections (BR-FIN-01). Two pieces of infrastructure sit under `core/finance` and are shared by both:
@@ -313,7 +321,7 @@ The bucket blocks public access, and every object is encrypted with server-side 
 ## 8. Frontend Architecture (`apps/web`)
 
 ### 8.1 Stack and Structure
-React 18, TypeScript in strict mode, Vite, Tailwind, shadcn/ui (Radix), TanStack Query, React Hook Form, Zod (from `@skillconnect/contracts`), React Router (data routers), and Axios.
+React 18, TypeScript in strict mode, Vite, Tailwind, shadcn/ui (Radix), TanStack Query, React Hook Form, Zod (from `@bijliwala/contracts`), React Router (data routers), and Axios.
 
 ```
 apps/web/src/
@@ -345,7 +353,7 @@ apps/web/src/
 - **Code splitting:** each route group (`public`, `company`, `provider`, `admin`) is lazy loaded.
 
 ### 8.3 Visual Design System (original)
-- Neutral white and light-grey surfaces, one brand accent (a deep indigo is proposed; final colour to be confirmed), and semantic status colours.
+- "Electric" brand palette (2026-11-18): deep power-line navy `#0E2A57` as the primary (buttons, links, active navigation, footer) and electric yellow `#FFC105` ("bolt") for the logo, headline highlights, focus rings and yellow call-to-action buttons, on white and cool-grey surfaces, with semantic status colours. Yellow is never used as text on white. Tokens live in `apps/web/src/styles/globals.css`.
 - Typography: Inter (UI) with a tabular-numbers variant for financial figures, on a 4 px spacing scale.
 - Rounded cards (`rounded-2xl`) with subtle shadows, and large 4:3 imagery for service categories on public pages.
 - Categories are presented as a grid of image cards on the home page, with sub-category chips on the category page.
@@ -387,3 +395,81 @@ apps/web/src/
 | T-14 | Time zones | Commitments and attendance need consistent dates. | Store instants in UTC. Store calendar dates as `YYYY-MM-DD` strings in the site's time zone (default IST). Store shift times as minutes from midnight in the site's time zone. |
 | T-15 | Notification provider | The SMS and WhatsApp vendors are unspecified. | Adapter interfaces. The concrete vendors (for example MSG91 and Meta Cloud API) are chosen at integration time. |
 | T-16 | Company onboarding | Do companies pay a registration fee? | No. Only providers pay registration fees. |
+| T-17 | Stack vs. requirement document | The Bijli Wala requirement document (§12) recommends Next.js, PostgreSQL and Prisma. | **Keep React (Vite), NestJS and MongoDB** (SRS §2.3). Public SEO is handled by prerendering CMS pages (§11.6). |
+| T-18 | Payroll payee for vendor workers | Pay the worker directly or the vendor? | Pay the **vendor**, with a per-worker breakdown (SRS FR-PAY-04). |
+| T-19 | Ad event volume | Impression writes may far exceed business writes. | Raw events go to a TTL `ad_events` collection through a Redis-buffered batch writer, and are rolled up hourly into `ad_stats_hourly`. Spend is debited from the hourly roll-up, never per event inside a transaction. |
+
+---
+
+## 11. Bijli Wala v2 Extensions (requirement document modules)
+
+This section designs the modules that SRS v2.0 adds (Sections 14–19). They follow the same conventions as the rest of the system: module-owned collections, `TransactionRunner`, outbox, conditional state transitions, business config and the shared contracts.
+
+### 11.1 Geography and scoped RBAC
+- **Masters:** `states` (code, name, GST state code, `isUT`), `districts`, `cities` and `pin_codes` (PIN code → district and state, with an optional geo point). They are seeded from a versioned dataset and can be edited by `geo.manage`.
+- Addresses gain `stateId`, `districtId`, `cityId` and `pinCode` alongside the free-text lines. Records created before this change keep `stateCode` and are backfilled by a migration.
+- **Scopes:** `SCOPE_TYPES` gains `STATE` and `CITY`, and assignments can carry a `departmentId`.
+  - Repository filters for platform users with a geo-scoped role add a `stateId $in scope.stateIds` condition, or the city equivalent. The `scopedQuery()` helper in `core/database/query.ts` builds this, so modules cannot forget it.
+  - A user with any `PLATFORM` assignment for that permission bypasses the geo filter.
+- **Sensitive permission families:** finance, document download and export are separate permissions (`*.export`, `document.download`, `finance.*`). The resolver never grants them implicitly through wildcard roles.
+- **Immediate effect:** this already works through `permVersion` (§6.1). Department or scope edits bump it as well.
+
+### 11.2 Work orders
+- When a quotation is accepted, the existing transaction (quotation → job, DATABASE §13) also creates a `work_orders` document in `DRAFT`. The document holds a snapshot of the commercial terms.
+- Issuing the work order renders a PDF through `core/pdf`. Client sign-off (`CLIENT_SIGNED`) moves the job to allow deployment.
+- An amendment creates version n+1 and supersedes the previous version, the same pattern as quotations.
+- Allocation approval (§6.3, step 3) also checks that the work order status is `CLIENT_SIGNED` or `ACTIVE` (BR-WO-01).
+
+### 11.3 Payroll and client billing separation
+- **Rates:** `billRate` lives on the work order or position and is visible to finance and the client. `payRate` lives on the assignment and is visible to HR and payroll. Payroll services take an assignment and attendance read model that **excludes** billing fields; this is enforced by the query service DTO.
+- **Payroll run:** a single transaction does the following:
+  - selects approved attendance in the period, not yet paid
+  - computes lines (pure function `computePayrollLine(attendance, rate, allowances, deductions)`)
+  - inserts `payroll_lines`
+  - marks the attendance records with `payrollRunId` (conditional on `payrollRunId: null`, which prevents double pay)
+  - sets the run to `CALCULATED`
+- Approval is maker-checker and posts to the `PAYROLL` ledger book. Marking lines paid records the transaction reference. Payslip PDFs are generated by the worker.
+- **Client billing** reads client-approved attendance through a separate path and writes `invoices` (§4 and §6.5).
+
+### 11.4 Advertising
+```
+Advertiser -> Campaign wizard -> SUBMITTED -> admin review -> APPROVED -> PAYMENT_PENDING
+   Razorpay order (notes.domain = ADVERTISING) -> webhook (only source of truth) -> SCHEDULED
+Scheduler (worker, every minute): SCHEDULED and startAt <= now -> ACTIVE
+Scheduler: ACTIVE and (endAt <= now or spent >= budget or impressions >= cap)
+           -> EXPIRED / BUDGET_EXHAUSTED, release slot inventory, notify the advertiser (outbox)
+```
+- **Inventory:** each `ad_slots` document has `capacity` (rotation size) and `exclusive` reservations. When a campaign is approved for a date range, the system checks that no exclusive reservation overlaps and that the number of active campaigns is below `capacity`. It uses the same conditional `$inc` pattern as position capacity (§6.3), applied per slot per day bucket.
+- **Payments:** a third domain, `ADVERTISING`, joins `REGISTRATION` and `BUSINESS` in webhook routing (§4.1). It has its own ledger book, `ADVERTISING`.
+- **Delivery (`GET /api/v1/public/ads?slot=&page=&device=`):**
+  1. Load the eligible set from a Redis cache, rebuilt on campaign state change and every 60 seconds. A campaign is eligible when it is `ACTIVE`, paid, within its dates, under budget and the slot is enabled.
+  2. Filter by targeting (state and city from a GeoIP lookup or the CMS page context, plus device and product category).
+  3. Apply the frequency cap using a Redis counter keyed by visitor hash, campaign and day.
+  4. Pick a creative by weighted random choice on priority, with smooth round-robin to keep rotation fair.
+  5. Return the creative together with signed `impressionToken` and `clickToken` values (HMAC, short TTL, one per serve).
+- **Events:** `POST /public/ads/impression` (with the token) and `GET /ad/click/:token`. Each token is redeemed once (Redis `SETNX`). Bot user agents and per-IP rate limits are filtered out. Valid events are buffered and batch-inserted into `ad_events`. An hourly roll-up writes `ad_stats_hourly` and debits CPC/CPM spend with a conditional `$inc` that cannot exceed the budget. The `ad.budget_exhausted` event fires when the budget runs out.
+- **Creatives:** stored through the presigned and quarantine pipeline (§6.7). They are published to the public CDN bucket only after scan and admin approval. Destination URLs are https-only and validated against an SSRF and blocklist policy. Clicks always go through the redirect.
+
+### 11.5 CMS
+- **Pages:** each `cms_pages` document has a `slug`, `type` (static, category, city, industry, service), `draft` and `published` block arrays, `seo` (title, description, OG image, canonical) and `version`.
+- **Blocks:** a discriminated union in contracts (`hero`, `richText`, `cardGrid`, `faq`, `cta`, `adSlot`, `categoryList`, `cityList`). Rich text is stored as sanitised HTML using an allowlist sanitiser, and is sanitised again on render.
+- **Public API:** `GET /public/cms/pages/:slug` serves the published version, cached in Redis and behind the CDN with ETag. A publish invalidates the cache and triggers prerender (§11.6).
+- **Menus and global settings:** header, footer, navigation and contact details live in `cms_menus` and business config keys `site.*`.
+
+### 11.6 Public site rendering and SEO (SRS open item O-01)
+The SPA stays as it is for the portals. For public CMS routes, a prerender job in the worker renders each published page to static HTML with headless Chromium (the same engine as T-12 PDFs) and writes it to storage. Nginx serves the prerendered file to crawlers and first loads, and the SPA hydrates over it. The prerender job also generates `sitemap.xml` and `robots.txt`.
+
+### 11.7 Notifications additions
+- A **push** channel (Web Push with VAPID) joins the channel adapters. Users subscribe from the employee PWA.
+- New template keys cover the events in requirement document §9: duty reminder, attendance issue, payment processed, campaign events and admin alerts.
+
+### 11.8 Web app additions
+- **New route groups:**
+  - `advertiser/`: dashboard, campaigns wizard, inventory, analytics, payments and invoices.
+  - `admin/advertising`: slots, packages, campaign review and finance.
+  - `admin/cms`: pages, menus and media.
+  - `admin/geography` and `admin/departments`.
+  - `admin/payroll` and `admin/work-orders`.
+  - Public CMS-driven pages, rendered by a `CmsPage` route that renders block components.
+- **New login entries:** Employee, Client, Vendor, Advertiser and Admin portals. All use the same auth endpoints with portal-specific landing pages, and `homePathFor` redirects by role.
+- **Ad rendering:** an `<AdSlot slotKey>` component reserves the slot dimensions (no layout shift), fetches a creative, reports an impression through `IntersectionObserver` when 50% is visible for 1 second, and links through the click redirect.

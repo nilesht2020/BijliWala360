@@ -11,7 +11,7 @@ import type { Request } from 'express';
 import type { Model } from 'mongoose';
 import { createHash } from 'node:crypto';
 import { from, lastValueFrom, type Observable } from 'rxjs';
-import { IDEMPOTENCY_HEADER } from '@skillconnect/contracts';
+import { IDEMPOTENCY_HEADER } from '@bijliwala/contracts';
 import type { AuthUser } from '../auth/auth.types';
 import { IDEMPOTENCY_MODEL, type IdempotencyDoc } from '../database/core.schemas';
 import { DomainError } from '../errors/domain-error';

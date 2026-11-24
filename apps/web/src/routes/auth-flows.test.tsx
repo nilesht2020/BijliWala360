@@ -5,7 +5,7 @@ import { http as mswHttp, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { SessionUser } from '@skillconnect/contracts';
+import type { SessionUser } from '@bijliwala/contracts';
 import { AuthProvider } from '@/app/auth';
 import { routes } from '@/app/router';
 import { tokenStore } from '@/lib/api-client';

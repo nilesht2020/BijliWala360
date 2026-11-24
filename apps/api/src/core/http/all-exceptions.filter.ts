@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ZodError } from 'zod';
-import { REQUEST_ID_HEADER, type ApiFailure, type ErrorCode } from '@skillconnect/contracts';
+import { REQUEST_ID_HEADER, type ApiFailure, type ErrorCode } from '@bijliwala/contracts';
 import { DomainError } from '../errors/domain-error';
 import { zodErrorToDomainError } from './zod';
 import { requestIdOf } from './response-envelope.interceptor';

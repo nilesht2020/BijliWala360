@@ -6,7 +6,7 @@ import {
   type ScopeType,
   type UserStatus,
   type UserType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { EncryptedValue } from '../../core/crypto/field-crypto';
 
 /* ---------------------------------------------------------------- users (DATABASE §4) */

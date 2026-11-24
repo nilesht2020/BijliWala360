@@ -8,7 +8,7 @@ import {
   type NotificationTemplateInput,
   type NotificationTemplateView,
   type UserType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { AuditService, type AuditActor, type AuditContext } from '../../core/audit/audit.service';
 import { DomainError, NotFoundError } from '../../core/errors/domain-error';
 import { NOTIFICATION_TEMPLATE_MODEL, type NotificationTemplateDoc } from './schemas';
@@ -36,7 +36,7 @@ const DEFAULT_TEMPLATES: NotificationTemplateInput[] = (['PROFESSIONAL', 'VENDOR
       audience,
       isActive: true,
       inApp: {
-        title: 'Welcome to SkillConnect, {{name}}',
+        title: 'Welcome to Bijli Wala, {{name}}',
         body:
           audience === 'COMPANY'
             ? 'Add your company details and sites to start raising service enquiries.'
@@ -50,7 +50,7 @@ const DEFAULT_TEMPLATES: NotificationTemplateInput[] = (['PROFESSIONAL', 'VENDOR
       locale: 'en',
       audience,
       isActive: true,
-      sms: { body: 'Welcome to SkillConnect, {{name}}. Sign in to complete your profile.' },
+      sms: { body: 'Welcome to Bijli Wala, {{name}}. Sign in to complete your profile.' },
     },
   ])
   .concat(registrationTemplates(), demandTemplates());
@@ -62,25 +62,25 @@ function registrationTemplates(): NotificationTemplateInput[] {
       'registration.payment_received',
       'Registration fee received',
       'We received ₹{{amount}}. Your profile goes to verification once submitted.',
-      'SkillConnect: we received your registration fee of Rs {{amount}}. Thank you.',
+      'Bijli Wala: we received your registration fee of Rs {{amount}}. Thank you.',
     ],
     [
       'registration.approved',
       'You are verified',
       'Congratulations {{name}}, your registration is approved. You will now receive matching job invitations.',
-      'SkillConnect: {{name}}, your registration is approved. You can now receive job invitations.',
+      'Bijli Wala: {{name}}, your registration is approved. You can now receive job invitations.',
     ],
     [
       'registration.changes_requested',
       'Changes needed on your registration',
       'Our verification team asked for changes: {{reason}}',
-      'SkillConnect: please update your registration. Reason: {{reason}}',
+      'Bijli Wala: please update your registration. Reason: {{reason}}',
     ],
     [
       'registration.rejected',
       'Registration not approved',
       'Your registration was not approved: {{reason}}. Any refund due is processed automatically.',
-      'SkillConnect: your registration was not approved. Reason: {{reason}}',
+      'Bijli Wala: your registration was not approved. Reason: {{reason}}',
     ],
   ];
   return (['PROFESSIONAL', 'VENDOR'] as const).flatMap((audience) =>
@@ -114,7 +114,7 @@ function demandTemplates(): NotificationTemplateInput[] {
       title: 'Your company is verified',
       body: '{{company}} is now active. You can accept quotations and start jobs.',
       link: '/company',
-      sms: 'SkillConnect: {{company}} is verified. You can now accept quotations and start jobs.',
+      sms: 'Bijli Wala: {{company}} is verified. You can now accept quotations and start jobs.',
     },
     {
       eventType: 'company.suspended',
@@ -122,15 +122,15 @@ function demandTemplates(): NotificationTemplateInput[] {
       title: 'Company account suspended',
       body: 'Your company account was suspended. Reason: {{reason}}',
       link: '/company',
-      sms: 'SkillConnect: your company account was suspended. Reason: {{reason}}',
+      sms: 'Bijli Wala: your company account was suspended. Reason: {{reason}}',
     },
     {
       eventType: 'company.user_invited',
       audience: 'COMPANY',
       title: 'Welcome to the {{company}} team',
-      body: 'You were added to {{company}} on SkillConnect.',
+      body: 'You were added to {{company}} on Bijli Wala.',
       link: '/company',
-      sms: 'SkillConnect: you were added to the {{company}} team. Sign in with this mobile number to get started.',
+      sms: 'Bijli Wala: you were added to the {{company}} team. Sign in with this mobile number to get started.',
     },
     {
       eventType: 'quotation.sent',
@@ -138,7 +138,7 @@ function demandTemplates(): NotificationTemplateInput[] {
       title: 'Quotation {{quotationNo}} received',
       body: 'Total ₹{{amount}} including GST, valid until {{validUntil}}. Review and accept it in the portal.',
       link: '/company/quotations/{{id}}',
-      sms: 'SkillConnect: quotation {{quotationNo}} for Rs {{amount}} is ready, valid until {{validUntil}}. Review it in your portal.',
+      sms: 'Bijli Wala: quotation {{quotationNo}} for Rs {{amount}} is ready, valid until {{validUntil}}. Review it in your portal.',
     },
     {
       eventType: 'job.created',
@@ -160,7 +160,7 @@ function demandTemplates(): NotificationTemplateInput[] {
       title: 'Job {{jobNo}} cancelled',
       body: 'Reason: {{reason}}',
       link: '/company/jobs/{{id}}',
-      sms: 'SkillConnect: job {{jobNo}} was cancelled. Reason: {{reason}}',
+      sms: 'Bijli Wala: job {{jobNo}} was cancelled. Reason: {{reason}}',
     },
     {
       eventType: 'enquiry.received',

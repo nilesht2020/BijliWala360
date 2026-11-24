@@ -11,7 +11,7 @@ import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
-import type { Permission, ScopeType, UserType } from '@skillconnect/contracts';
+import type { Permission, ScopeType, UserType } from '@bijliwala/contracts';
 import { configureApp } from '../../src/bootstrap';
 import { AuthCoreModule } from '../../src/core/auth/auth-core.module';
 import type { PermissionResolver, ResolvedAccess, RoleScope } from '../../src/core/auth/auth.types';
@@ -46,7 +46,7 @@ export function setTestEnv(dbName: string): void {
     WEB_BASE_URL: 'http://web.test',
     NOTIFICATION_WEBHOOK_TOKEN: TEST_WEBHOOK_TOKEN,
     STORAGE_DRIVER: 'local',
-    LOCAL_STORAGE_DIR: join(tmpdir(), 'skillconnect-test-storage', dbName),
+    LOCAL_STORAGE_DIR: join(tmpdir(), 'bijliwala-test-storage', dbName),
     SCANNER: 'none',
     QUEUE_MODE: 'queue',
   });

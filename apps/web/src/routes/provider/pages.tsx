@@ -4,12 +4,7 @@ import { ArrowRight, Plus, UserMinus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
-import {
-  ID_TYPES,
-  workerCreateSchema,
-  type WorkerCreateInput,
-  type WorkerView,
-} from '@skillconnect/contracts';
+import { ID_TYPES, workerCreateSchema, type WorkerCreateInput, type WorkerView } from '@bijliwala/contracts';
 import { useAuth } from '@/app/auth';
 import { DataTable } from '@/components/data-table/data-table';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';

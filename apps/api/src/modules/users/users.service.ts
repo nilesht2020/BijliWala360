@@ -9,7 +9,7 @@ import type {
   UserListQuery,
   UserStatus,
   UserView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { AuditService, type AuditActor, type AuditContext } from '../../core/audit/audit.service';
 import { EMAIL_PROVIDER, type EmailProvider } from '../../core/channels/channels';
 import { AppConfig } from '../../core/config/app-config';
@@ -400,7 +400,7 @@ export class UsersService {
     );
     const link = `${this.config.env.WEB_BASE_URL}/reset-password?token=${encodeURIComponent(token)}`;
     const subject =
-      kind === 'INVITE' ? 'Set up your SkillConnect admin account' : 'Reset your SkillConnect password';
+      kind === 'INVITE' ? 'Set up your Bijli Wala admin account' : 'Reset your Bijli Wala password';
     const intro =
       kind === 'INVITE'
         ? `Hello ${user.name}, an administrator account has been created for you.`

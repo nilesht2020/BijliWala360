@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'node:crypto';
 import type { ClientSession, Model } from 'mongoose';
-import type { LedgerBook } from '@skillconnect/contracts';
+import type { LedgerBook } from '@bijliwala/contracts';
 import { DomainError } from '../errors/domain-error';
 import { LEDGER_MODEL, type LedgerAccount, type LedgerEntryDoc } from './finance.schemas';
 

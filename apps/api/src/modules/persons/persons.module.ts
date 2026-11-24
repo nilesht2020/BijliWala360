@@ -7,7 +7,7 @@ import {
   normaliseIdNumber,
   type IdentityConflictView,
   type IdType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, RequirePermissions } from '../../core/auth/decorators';
@@ -158,7 +158,7 @@ export class PersonsService {
         throw Object.assign(
           new DomainError(
             'PERSON_ALREADY_ACTIVE',
-            'This person is already registered on SkillConnect with another active profile.',
+            'This person is already registered on Bijli Wala with another active profile.',
           ),
           {
             conflict: {
@@ -210,7 +210,7 @@ export class PersonsService {
       if ((err as { code?: number }).code === 11000) {
         throw new DomainError(
           'PERSON_ALREADY_ACTIVE',
-          'This person is already registered on SkillConnect with another active profile.',
+          'This person is already registered on Bijli Wala with another active profile.',
         );
       }
       throw err;

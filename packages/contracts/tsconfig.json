@@ -1,5 +1,5 @@
 {
-  "extends": "@skillconnect/tsconfig/node.json",
+  "extends": "@bijliwala/tsconfig/node.json",
   "compilerOptions": { "rootDir": "src", "outDir": "dist", "types": ["jest", "node"] },
   "include": ["src"]
 }

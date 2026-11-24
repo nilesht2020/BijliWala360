@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeft, ClipboardList, FileDown, MapPin, Plus, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Eye, MapPin, Plus, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -20,7 +20,7 @@ import {
   type QuotationView,
   type SiteInput,
   type SiteView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useAuth, useCan } from '@/app/auth';
 import { DataTable, useListParams } from '@/components/data-table/data-table';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
@@ -95,7 +95,7 @@ function RegisterCompany() {
       <CardHeader>
         <CardTitle>Register your company</CardTitle>
         <CardDescription>
-          You can raise enquiries straight away. Once SkillConnect verifies your company, you can accept
+          You can raise enquiries straight away. Once Bijli Wala verifies your company, you can accept
           quotations and start jobs.
         </CardDescription>
       </CardHeader>
@@ -197,7 +197,7 @@ export function CompanyStatusBanner({ status, reason }: { status: string; reason
   return (
     <Alert tone={status === 'SUSPENDED' ? 'danger' : 'warning'} className="mb-4">
       {status === 'SUSPENDED'
-        ? `Your company account is suspended${reason ? `: ${reason}` : ''}. Contact SkillConnect support.`
+        ? `Your company account is suspended${reason ? `: ${reason}` : ''}. Contact Bijli Wala support.`
         : 'Your company is waiting for verification. You can raise enquiries now; quotations can be accepted once you are verified.'}
     </Alert>
   );
@@ -441,7 +441,7 @@ export function SitesPage() {
     <>
       <PageHeader
         title="Sites"
-        description="Locations where SkillConnect people work for you."
+        description="Locations where Bijli Wala people work for you."
         actions={
           canManage && (
             <Button
@@ -534,7 +534,7 @@ export function TeamPage() {
     <>
       <PageHeader
         title="Team"
-        description="People from your company who can use SkillConnect."
+        description="People from your company who can use Bijli Wala."
         actions={
           <Button onClick={() => setOpen(true)}>
             <UserPlus aria-hidden /> Add member
@@ -666,7 +666,7 @@ export function TeamPage() {
         open={!!removing}
         onOpenChange={(o) => !o && setRemoving(null)}
         title={`Remove ${removing?.name ?? ''}?`}
-        description="They will lose access to your company on SkillConnect."
+        description="They will lose access to your company on Bijli Wala."
         confirmLabel="Remove"
         destructive
         onConfirm={async () => {
@@ -886,7 +886,7 @@ export function QuotationsPage() {
   const list = useCompanyQuotations({ page, pageSize, status: filters.status });
   return (
     <>
-      <PageHeader title="Quotations" description="Review and accept quotations from SkillConnect." />
+      <PageHeader title="Quotations" description="Review and accept quotations from Bijli Wala." />
       <DataTable
         columns={quotationColumns}
         data={list.data?.items}
@@ -928,7 +928,6 @@ export function CompanyQuotationPage() {
   const [reason, setReason] = useState('');
   // A fresh key per confirmation dialog: retries of the same click replay, a new decision does not.
   const [acceptKey, setAcceptKey] = useState(newIdempotencyKey);
-  const [pdfBusy, setPdfBusy] = useState(false);
   if (quotation.isLoading) return <Skeleton className="h-96 w-full" />;
   const q = quotation.data;
   if (!q) return <EmptyState title="Quotation not found" />;
@@ -952,17 +951,9 @@ export function CompanyQuotationPage() {
             <Button
               variant="outline"
               size="sm"
-              loading={pdfBusy}
-              onClick={async () => {
-                setPdfBusy(true);
-                try {
-                  await openPdf(`/quotations/${q.id}/pdf-url`);
-                } finally {
-                  setPdfBusy(false);
-                }
-              }}
+              onClick={() => openPdf(`/quotations/${q.id}/pdf-url`, `${q.quotationNo} · v${q.version}`)}
             >
-              <FileDown aria-hidden /> PDF
+              <Eye aria-hidden /> View PDF
             </Button>
           </>
         }

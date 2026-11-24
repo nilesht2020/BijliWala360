@@ -1,10 +1,10 @@
-# SkillConnect — Database Design (MongoDB)
+# Bijli Wala — Database Design (MongoDB)
 
 | Field | Value |
 |---|---|
-| Version | 0.2 (Phase 2 collections implemented) |
-| Date | 2026-11-13 |
-| Source | `SRS.md` v1.0, `ARCHITECTURE.md` v0.1 |
+| Version | 0.3 (Phase 4 collections implemented; v2 collections designed in §15) |
+| Date | 2026-11-18 |
+| Source | `SRS.md` v2.0, `ARCHITECTURE.md` v0.2, `bijli wala .docx` §11 |
 
 ---
 
@@ -679,3 +679,148 @@ The `TransactionRunner` retries a transaction on `TransientTransactionError`, in
 | Notification delivery logs | 180 days |
 | Report export files | 7 days |
 | DPDP erasure | PII fields are anonymised (name → "Deleted user", mobile, email and IDs removed, documents purged). Financial references are kept. |
+
+---
+
+## 15. Bijli Wala v2 Collections (requirement document §11)
+
+### 15.1 Entity mapping
+The requirement document lists the minimum entities as relational tables. Bijli Wala keeps MongoDB (SRS §2.3), so each entity maps to a collection, an embedded array, or an existing collection, as below. "Built" means the collection exists in Phases 1–4.
+
+| Requirement doc entity | Bijli Wala collection | Status |
+|---|---|---|
+| users, roles, permissions, user_roles, role_permissions | `users`, `roles` (permissions embedded as codes), `role_assignments`. The permission catalogue lives in `packages/contracts`. | Built |
+| departments | `departments` + `role_assignments.departmentId` + `users.departmentIds` | New |
+| states, districts, cities, pin_codes | `states`, `districts`, `cities`, `pin_codes` | New |
+| technicians | `professionals`, `vendor_workers`, with identity in `persons`; `employeeNo` added | Built (+ fields) |
+| technician_skills | `professionals.skills[]`, `vendor_workers.skills[]` | Built |
+| qualifications, experience_records | `professionals.qualifications[]`, `professionals.experience[]` (new embedded arrays) | New fields |
+| technician_documents, client_documents | `documents` (`ownerType` + `ownerId`) | Built |
+| availability | `professionals.availability`, `commitments` | Built / Phase 5 |
+| vendors, vendor_employees | `vendors`, `vendor_workers` | Built |
+| clients | `companies`, `company_sites` | Built |
+| requirements, requirement_skills | `enquiries` (positions embedded; `enquiryNo` is shown as the Requirement ID) | Built (+ fields) |
+| quotations, quotation_items | `quotations` (`lines[]` embedded) | Built |
+| projects | `jobs` (positions embedded; `jobNo` is shown as the Project ID) | Built |
+| work_orders | `work_orders` | New |
+| assignments | `assignments`, `commitments` | Phase 5 |
+| attendance, leave_requests | `attendance_records`, `leave_requests` | Phase 6 |
+| payroll | `payroll_runs`, `payroll_lines` | New |
+| invoices, invoice_items | `invoices` (`lines[]` embedded), `credit_notes` | Phase 7 |
+| payments, refunds | `registration_payments` / `business_payments` / `ad_payments`, `*_refunds`, `ledger_entries` | Partial |
+| ad_slots, ad_packages, ad_campaigns, ad_creatives | `ad_slots`, `ad_packages`, `ad_campaigns`, `ad_creatives` | New |
+| campaign_targeting | `ad_campaigns.targeting` (embedded) | New |
+| ad_impressions, ad_clicks | `ad_events` (`type: IMPRESSION`/`CLICK`, TTL) + `ad_stats_hourly` | New |
+| notifications | `notifications`, `notification_templates`, `notification_preferences`, `push_subscriptions` | Built (+ push) |
+| cms_pages, cms_media | `cms_pages`, `cms_media`, `cms_menus` | New |
+| audit_logs | `audit_logs` | Built |
+| system_settings | `business_settings` | Built |
+
+Every important record has `createdAt`, `updatedAt`, `createdBy` and `updatedBy` (§1).
+
+### 15.2 Geography and departments
+
+#### `states`
+`{ code: 'MH', name, gstStateCode: '27', isUT: boolean, isActive }` — Indexes: U `{code:1}`, U `{gstStateCode:1}`.
+
+#### `districts`
+`{ stateId, name, isActive }` — Indexes: U `{stateId:1, name:1}`.
+
+#### `cities`
+`{ stateId, districtId, name, slug, location?: Point, isActive, hasCmsPage: boolean }` — Indexes: U `{stateId:1, slug:1}`, `{districtId:1}`, 2dsphere `{location:1}` (S).
+
+#### `pin_codes`
+`{ pinCode: '411001', stateId, districtId, cityId?, location?: Point }` — Indexes: U `{pinCode:1}`, `{cityId:1}`.
+
+#### `departments`
+`{ code: 'HR', name, description, isActive, isSystem }` — Index: U `{code:1}`. Seeded with the ten departments in SRS FR-DEP-01.
+
+`role_assignments` gains `departmentId?` and `scope` gains `{ type: 'STATE', stateIds[] }` and `{ type: 'CITY', cityIds[] }`. Address sub-documents across collections gain `stateId`, `districtId`, `cityId` and `pinCode`, with indexes on `{'address.stateId':1}` and `{'address.cityId':1}` wherever geo-scoped lists are queried.
+
+### 15.3 Technician additions
+- `professionals` gains:
+  - `employeeNo` (U, from `counters` key `employee`)
+  - `qualifications[] { level: ITI|DIPLOMA|DEGREE|OTHER, title, institute, passingYear, docId? }`
+  - `experience[] { company, role, from, to?, projectSummary }`
+  - `workPreferences { employmentStatus, availableFrom, preferredStateIds[], preferredCityIds[], willingToRelocate, willingToTravel, employmentType, expectedDailyWagePaise, expectedMonthlySalaryPaise, shiftPreference }`
+  - `emergencyContact { name, relation, mobile }`
+  - `declarations[] { code, policyVersion, acceptedAt, ip, userAgent }`
+  - `operationalStatus: AVAILABLE|TEMPORARILY_UNAVAILABLE|ON_ASSIGNMENT` (derived and maintained by assignment events)
+- `vendor_workers` gains `employeeNo` (U) and the same `qualifications` and `operationalStatus`.
+
+### 15.4 Work orders and payroll
+
+#### `work_orders`
+`{ workOrderNo, version, supersedesId?, companyId, jobId, quotationId, enquiryId, status: DRAFT|ISSUED|CLIENT_SIGNED|ACTIVE|COMPLETED|CANCELLED|AMENDED, terms: { lines[{ skillId, categoryId, headcount, billRatePaise, unit, dutyHours }], contractStart, contractEnd, paymentTerms, overtimeTerms, replacementTerms, responsibilities, taxes }, pdfDocId?, issuedAt?, clientSignedBy?, clientSignedAt?, clientSignedIp?, signatories[], version }` — Indexes: U `{workOrderNo:1, version:1}`, `{jobId:1, status:1}`, `{companyId:1, createdAt:-1}`.
+
+#### `leave_requests`
+`{ personId, assignmentId?, from, to, type, reason, status: PENDING|APPROVED|REJECTED|CANCELLED, decidedBy?, decidedAt? }` — Indexes: `{personId:1, from:1}`, `{status:1}`.
+
+#### `payroll_runs`
+`{ runNo, periodFrom, periodTo, scope: { companyId?, jobId?, vendorId? }, status: DRAFT|CALCULATED|APPROVED|PARTIALLY_PAID|PAID|CANCELLED, totals: { grossPaise, deductionsPaise, netPaise }, preparedBy, approvedBy?, approvedAt?, version }` — Indexes: U `{runNo:1}`, `{status:1, periodTo:-1}`.
+
+#### `payroll_lines`
+`{ runId, payeeType: PROFESSIONAL|VENDOR, payeeId, personId, assignmentIds[], days, hours, overtimeMinutes, wagePaise, overtimePaise, allowances[{code, amountPaise}], deductions[{code, amountPaise}], netPaise, status: PENDING|PAID|ON_HOLD, paidAt?, transactionRef?, payslipDocId? }` — Indexes: `{runId:1}`, `{payeeId:1, createdAt:-1}`, `{personId:1}`.
+
+`attendance_records` gains `payrollRunId?` (P index `{payrollRunId:1}`) and `billedInvoiceId?`. Each is set once by a conditional update, which prevents paying or billing the same day twice.
+
+### 15.5 Advertising
+
+#### `advertisers`
+`{ advertiserNo, companyName, brandName, contact { name, designation, mobile, email }, website, gstin?, address (with geo ids), productCategoryIds[], description, logoDocId?, status: PENDING|APPROVED|ACTIVE|REJECTED|SUSPENDED, statusReason?, version }` — Indexes: U `{advertiserNo:1}`, `{status:1}`, U P `{gstin:1}` (when present).
+
+#### `ad_product_categories`
+`{ name, slug, isActive, order }` — Index: U `{slug:1}`.
+
+#### `ad_slots`
+`{ slotKey (U), name, page, section, position, devices[], width, height, maxBytes, formats[], campaignTypes[], pricingModels[], basePricePaise, capacity, priorityEnabled, requiresApproval, dailyImpressionLimit?, status: ENABLED|DISABLED, exclusiveReservations[{ campaignId, from, to }] }` — Indexes: U `{slotKey:1}`, `{page:1, status:1}`.
+
+#### `ad_slot_inventory`
+`{ slotId, day: 'YYYY-MM-DD', booked, capacity, exclusiveCampaignId? }` — Index: U `{slotId:1, day:1}`. A conditional `$inc` guards capacity, the same pattern as job positions.
+
+#### `ad_packages`
+`{ code (U), name, pricingModel: FIXED_DAILY|FIXED_WEEKLY|FIXED_MONTHLY|CPC|CPM, slotIds[], pricePaise, gstRateBp, minBudgetPaise?, isActive, effectiveFrom, effectiveTo? }` — Indexes: U `{code:1}`, `{isActive:1}`. **Prices live only here** (BR-ADV-02).
+
+#### `ad_campaigns`
+`{ campaignNo, advertiserId, name, objective, packageSnapshot, slotIds[], pages[], targeting { allIndia, stateIds[], cityIds[], productCategoryIds[], devices[] }, startAt, endAt, budgetPaise, spentPaise, impressionCap?, frequencyCapPerDay?, priority, status, statusHistory[], reviewNotes?, paymentId?, version }` — Indexes: U `{campaignNo:1}`, `{advertiserId:1, createdAt:-1}`, `{status:1, startAt:1}`, `{status:1, endAt:1}`.
+
+#### `ad_creatives`
+`{ campaignId, headline, desktopDocId, mobileDocId?, bannerDocId?, destinationUrl, width, height, mime, bytes, status: PENDING|APPROVED|REJECTED|REPLACED, publicUrl?, reviewedBy? }` — Index: `{campaignId:1, status:1}`.
+
+#### `ad_payments` / `ad_refunds`
+These have the same shape as `registration_payments` and `registration_refunds`, with `campaignId` and ledger book `ADVERTISING`. Indexes: U `{gatewayOrderId:1}` (S), `{campaignId:1}`.
+
+#### `ad_events`
+`{ type: IMPRESSION|CLICK, campaignId, creativeId, slotId, tokenId (U), at, visitorHash, ipHash, stateId?, cityId?, device, valid: boolean, invalidReason? }` — Indexes: U `{tokenId:1}`, `{campaignId:1, at:1}`, TTL `{at:1}` (90 days).
+
+#### `ad_stats_hourly`
+`{ campaignId, slotId, hour: Date, impressions, clicks, spendPaise, byState: {}, byDevice: {} }` — Index: U `{campaignId:1, slotId:1, hour:1}`. Retained permanently for advertiser reporting.
+
+### 15.6 CMS and push
+
+#### `cms_pages`
+`{ slug (U), type: STATIC|CATEGORY|CITY|INDUSTRY|SERVICE, title, draft: Block[], published: Block[], publishedAt?, publishedBy?, seo { title, description, ogImageDocId?, canonical? }, cityId?, categoryId?, status: DRAFT|PUBLISHED|ARCHIVED, version }` — Indexes: U `{slug:1}`, `{type:1, status:1}`.
+
+#### `cms_media`
+`{ docId, alt, width, height, publicUrl, tags[] }` — Index: `{tags:1}`.
+
+#### `cms_menus`
+`{ key: HEADER|FOOTER|…, items[{ label, href, children[] }] }` — Index: U `{key:1}`.
+
+#### `push_subscriptions`
+`{ userId, endpoint (U), keys { p256dh, auth }, userAgent, lastSeenAt }` — Indexes: U `{endpoint:1}`, `{userId:1}`.
+
+### 15.7 v2 transaction boundaries
+
+| Use case | Documents written in one transaction |
+|---|---|
+| Quotation accept (v2) | Same as §13, plus `work_orders` (DRAFT, + `counters`) |
+| Work order client sign-off | `work_orders` (conditional), `jobs` (deployment allowed), audit, outbox |
+| Technician submit (v2) | `professionals` (declarations, `employeeNo` from `counters`), `provider_registrations`, audit, outbox |
+| Payroll calculate | `payroll_runs`, `payroll_lines`, `attendance_records.payrollRunId` (conditional on null) |
+| Payroll approve or pay | `payroll_runs`, `payroll_lines`, `ledger_entries` (book PAYROLL), audit, outbox |
+| Campaign approve | `ad_campaigns` (conditional), `ad_slot_inventory` (capacity guard per day), audit, outbox |
+| Ad payment success (webhook) | `ad_payments`, `ad_campaigns` (PAYMENT_PENDING → SCHEDULED), `ledger_entries` (book ADVERTISING), `webhook_events`, outbox |
+| Campaign expiry | `ad_campaigns` (conditional), `ad_slot_inventory` (release future days), outbox |
+| Hourly ad roll-up | `ad_stats_hourly` (upsert), `ad_campaigns.spentPaise` (conditional `$inc` capped at budget) |
+| CMS publish | `cms_pages` (draft → published, version), audit, outbox (prerender) |

@@ -13,7 +13,7 @@ import {
   type DocumentView,
   type UploadIntentInput,
   type UploadIntentResponse,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { hasPermission, isPlatformUser } from '../../core/auth/guards';
@@ -668,7 +668,7 @@ export class DocumentsService implements OnApplicationBootstrap {
     id: string,
     user: AuthUser,
     ctx: AuditContext,
-  ): Promise<{ url: string; expiresAt: string }> {
+  ): Promise<{ url: string; expiresAt: string; mime: string; fileName: string }> {
     const doc = await this.getDoc(id);
     await this.assertCanRead(user, doc);
     if (
@@ -679,8 +679,12 @@ export class DocumentsService implements OnApplicationBootstrap {
     }
     const ttl = await this.config.get('documents.downloadUrlTtlSeconds');
     const type = await this.types.findOne({ code: doc.typeCode }).lean<DocumentTypeDoc>().exec();
-    const download = doc.mime === 'application/pdf' ? undefined : doc.fileName;
-    const url = await this.storage.presignDownload(doc.storageKey, ttl, download ?? doc.fileName);
+    // Shown in the browser tab, not saved: every stored document is a PDF/JPEG/PNG/WebP whose
+    // type was checked by magic bytes when the upload completed.
+    const url = await this.storage.presignDownload(doc.storageKey, ttl, {
+      fileName: doc.fileName,
+      inline: true,
+    });
     if (type?.isSensitive) {
       await this.audit.record({
         actor: actorFromUser(user),
@@ -691,7 +695,12 @@ export class DocumentsService implements OnApplicationBootstrap {
         context: ctx,
       });
     }
-    return { url, expiresAt: new Date(Date.now() + ttl * 1000).toISOString() };
+    return {
+      url,
+      expiresAt: new Date(Date.now() + ttl * 1000).toISOString(),
+      mime: doc.mime,
+      fileName: doc.fileName,
+    };
   }
 
   /* ------------------------------------------------------------------ review & expiry */

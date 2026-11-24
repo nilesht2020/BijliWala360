@@ -2,7 +2,7 @@ import { Module, RequestMethod } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import { LoggerModule } from 'nestjs-pino';
-import { REQUEST_ID_HEADER } from '@skillconnect/contracts';
+import { REQUEST_ID_HEADER } from '@bijliwala/contracts';
 import { AppConfig } from '../config/app-config';
 
 /** Paths redacted from every log line (SRS §10.6, ARCHITECTURE §6.11). */

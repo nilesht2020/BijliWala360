@@ -32,7 +32,7 @@ import {
   type PageMeta,
   type PaymentTerms,
   type QuotationSchedule,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import {
   actorFromUser,
   AuditService,

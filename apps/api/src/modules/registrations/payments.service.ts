@@ -12,7 +12,7 @@ import {
   type RegistrationPaymentView,
   type RegistrationRefundView,
   type RegistrationView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { BusinessConfigService } from '../../core/business-config/business-config.service';
@@ -192,7 +192,7 @@ export class RegistrationPaymentsService implements OnModuleInit {
         orderId,
         amount: due.amountPaise,
         currency: 'INR',
-        name: 'SkillConnect',
+        name: 'Bijli Wala',
         description: `${reg.planSnapshot?.name ?? 'Registration'} fee`,
       },
     };

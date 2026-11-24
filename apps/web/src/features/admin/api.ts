@@ -12,7 +12,7 @@ import type {
   UpdateRoleInput,
   UserDetailView,
   UserView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { api, http, type CursorPage, type Page } from '@/lib/api-client';
 
 /** Query keys for administration features (ARCHITECTURE §8.2). */

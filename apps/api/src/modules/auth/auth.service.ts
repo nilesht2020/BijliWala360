@@ -5,7 +5,7 @@ import type {
   OtpChallengeResponse,
   SessionUser,
   SignupInput,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { AuditService, type AuditActor, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { BusinessConfigService } from '../../core/business-config/business-config.service';

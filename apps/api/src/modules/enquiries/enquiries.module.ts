@@ -38,7 +38,7 @@ import {
   type EnquiryView,
   type PageMeta,
   type QuotationStatus,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import {
   actorFromUser,
   AuditService,

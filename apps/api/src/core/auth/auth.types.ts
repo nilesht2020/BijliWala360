@@ -1,4 +1,4 @@
-import type { Permission, ScopeType, UserType } from '@skillconnect/contracts';
+import type { Permission, ScopeType, UserType } from '@bijliwala/contracts';
 
 /** Claims carried in the access JWT (ARCHITECTURE §6.1). Permissions are NOT in the token. */
 export interface AccessTokenClaims {

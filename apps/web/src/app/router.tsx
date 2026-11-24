@@ -24,6 +24,9 @@ const ForgotPasswordPage = lazy(() =>
 const ResetPasswordPage = lazy(() =>
   import('@/routes/public/password-pages').then((m) => ({ default: m.ResetPasswordPage })),
 );
+const AdminDashboardPage = lazy(() =>
+  import('@/routes/admin/dashboard').then((m) => ({ default: m.AdminDashboardPage })),
+);
 const UsersPage = lazy(() => import('@/routes/admin/users').then((m) => ({ default: m.UsersPage })));
 const UserDetailPage = lazy(() =>
   import('@/routes/admin/users').then((m) => ({ default: m.UserDetailPage })),
@@ -127,6 +130,7 @@ export const routes: RouteObject[] = [
     element: <AdminPortal />,
     children: [
       ...placeholders(ADMIN_NAV, [
+        '/admin',
         '/admin/users',
         '/admin/roles',
         '/admin/audit',
@@ -139,6 +143,7 @@ export const routes: RouteObject[] = [
         '/admin/companies',
         '/admin/jobs',
       ]),
+      { index: true, element: withSuspense(<AdminDashboardPage />) },
       { path: 'companies', element: withSuspense(<CompaniesPage />) },
       { path: 'companies/:id', element: withSuspense(<CompanyDetailPage />) },
       { path: 'enquiries', element: withSuspense(<EnquiriesInboxPage />) },

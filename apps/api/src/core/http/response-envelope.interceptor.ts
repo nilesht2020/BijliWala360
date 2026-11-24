@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { map, type Observable } from 'rxjs';
-import { REQUEST_ID_HEADER, type ApiSuccess, type CursorMeta, type PageMeta } from '@skillconnect/contracts';
+import { REQUEST_ID_HEADER, type ApiSuccess, type CursorMeta, type PageMeta } from '@bijliwala/contracts';
 
 export const RAW_RESPONSE = 'http:rawResponse';
 /** Skip the envelope (webhooks, health checks, redirects). */

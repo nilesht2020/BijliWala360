@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { openDocumentViewer } from '@/components/document-viewer';
 import type {
   CategoryView,
   DocumentTypeView,
@@ -19,7 +20,7 @@ import type {
   VendorView,
   WorkerCreateInput,
   WorkerView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { FileUploadApi } from '@/components/forms/file-upload';
 import { api, ApiError } from '@/lib/api-client';
 import { newIdempotencyKey } from '@/lib/utils';
@@ -287,6 +288,19 @@ export function useDocuments(ownerType: string, ownerId: string | undefined) {
   });
 }
 
+/** Short-lived signed URL for showing a stored image (e.g. the profile photo) in an <img>. */
+export function useDocumentImageUrl(documentId: string | undefined) {
+  return useQuery({
+    queryKey: ['documents', 'image-url', documentId ?? ''],
+    queryFn: () => api.get<{ url: string }>(`/documents/${documentId}/download-url`),
+    enabled: !!documentId,
+    // Signed URLs live ~60 s; an <img> that has loaded keeps its pixels, so only refresh when stale.
+    staleTime: 45_000,
+    refetchOnWindowFocus: false,
+    select: (r) => r.url,
+  });
+}
+
 /** Adapter for <FileUpload>: rejected files surface as an error message. */
 export function documentUploadApi(params: {
   typeCode: string;
@@ -315,7 +329,7 @@ export function documentUploadApi(params: {
   };
 }
 
-export async function openDocument(id: string): Promise<void> {
-  const { url } = await api.get<{ url: string }>(`/documents/${id}/download-url`);
-  window.open(url, '_blank', 'noopener');
+/** Shows a stored document in the in-app viewer (no new tab, no file saved). */
+export function openDocument(id: string, title = 'Document'): void {
+  openDocumentViewer({ urlPath: `/documents/${id}/download-url`, title });
 }

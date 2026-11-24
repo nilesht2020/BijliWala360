@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
-/** Design tokens (ARCHITECTURE §8.3): neutral light surfaces, one indigo accent, semantic status colours. */
+/** Design tokens (ARCHITECTURE §8.3): navy primary, electric-yellow "bolt" brand colour, semantic status colours. */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
@@ -18,6 +18,7 @@ export default {
         secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
         muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
         accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+        bolt: { DEFAULT: 'hsl(var(--bolt))', foreground: 'hsl(var(--bolt-foreground))' },
         destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
         success: { DEFAULT: 'hsl(var(--success))', foreground: 'hsl(var(--success-foreground))' },
         warning: { DEFAULT: 'hsl(var(--warning))', foreground: 'hsl(var(--warning-foreground))' },

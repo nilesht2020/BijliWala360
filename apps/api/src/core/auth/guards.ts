@@ -2,7 +2,7 @@ import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@ne
 import { Reflector } from '@nestjs/core';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import type { Request } from 'express';
-import type { Permission } from '@skillconnect/contracts';
+import type { Permission } from '@bijliwala/contracts';
 import { DomainError, ForbiddenError } from '../errors/domain-error';
 import {
   PERMISSION_RESOLVER,

@@ -1,4 +1,4 @@
-import type { UserType } from '@skillconnect/contracts';
+import type { UserType } from '@bijliwala/contracts';
 import {
   BarChart3,
   Bell,

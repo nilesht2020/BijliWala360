@@ -11,7 +11,7 @@ import {
   type CreateAdminUserInput,
   type RoleView,
   type UserView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useCan } from '@/app/auth';
 import { DataTable, useListParams } from '@/components/data-table/data-table';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
@@ -103,7 +103,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="Everyone with access to SkillConnect: administrators, companies and providers."
+        description="Everyone with access to Bijli Wala: administrators, companies and providers."
         actions={
           canManage && (
             <Button onClick={() => setCreating(true)}>

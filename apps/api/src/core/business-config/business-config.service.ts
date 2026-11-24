@@ -8,7 +8,7 @@ import {
   isBusinessConfigKey,
   type BusinessConfigKey,
   type BusinessConfigValue,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { AuditService, type AuditActor } from '../audit/audit.service';
 import { BUSINESS_SETTING_MODEL, type BusinessSettingDoc } from '../database/core.schemas';
 import { DomainError } from '../errors/domain-error';

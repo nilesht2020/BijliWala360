@@ -1,4 +1,4 @@
-import { stateNameOf } from '@skillconnect/contracts';
+import { stateNameOf } from '@bijliwala/contracts';
 import { MARGIN, SimplePdf } from '../../core/pdf/simple-pdf';
 import type { SiteDoc } from '../companies/companies.module';
 import type { QuotationDoc } from './quotations.module';
@@ -134,7 +134,7 @@ export function renderQuotationPdf({
     terms.push(
       `${m.label}: ${m.pct}% ${DUE[m.due] ?? ''}${m.due === 'DATE' && m.dueDate ? ` ${m.dueDate}` : ''}.`,
     );
-  if (terms.length === 0) terms.push('As per the credit period agreed with SkillConnect.');
+  if (terms.length === 0) terms.push('As per the credit period agreed with Bijli Wala.');
   for (const t of terms) pdf.paragraph(`-  ${t}`, 9.5);
 
   if (q.terms.trim()) {
@@ -144,7 +144,7 @@ export function renderQuotationPdf({
 
   pdf.gap(14);
   pdf.paragraph(
-    'This quotation is generated electronically. Accept or reject it in the SkillConnect company portal. ' +
+    'This quotation is generated electronically. Accept or reject it in the Bijli Wala company portal. ' +
       'Amounts are in Indian Rupees; GST is charged as shown above.',
     8,
   );

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { Permission, SessionUser } from '@skillconnect/contracts';
+import type { Permission, SessionUser } from '@bijliwala/contracts';
 import { api, http, tokenStore } from '@/lib/api-client';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';

@@ -1,8 +1,8 @@
 {
-  "name": "@skillconnect/api",
+  "name": "@bijliwala/api",
   "version": "0.1.0",
   "private": true,
-  "description": "SkillConnect backend: NestJS modular monolith (api + worker processes)",
+  "description": "Bijli Wala backend: NestJS modular monolith (api + worker processes)",
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",
@@ -27,7 +27,7 @@
     "@nestjs/mongoose": "11.0.3",
     "@nestjs/platform-express": "11.1.6",
     "@nestjs/swagger": "11.2.0",
-    "@skillconnect/contracts": "workspace:*",
+    "@bijliwala/contracts": "workspace:*",
     "bullmq": "5.58.0",
     "cookie-parser": "1.4.7",
     "helmet": "8.1.0",
@@ -45,7 +45,7 @@
     "@nestjs/cli": "11.0.10",
     "@nestjs/schematics": "11.0.7",
     "@nestjs/testing": "11.1.6",
-    "@skillconnect/tsconfig": "workspace:*",
+    "@bijliwala/tsconfig": "workspace:*",
     "@types/cookie-parser": "1.4.9",
     "@types/express": "5.0.3",
     "@types/jest": "29.5.14",

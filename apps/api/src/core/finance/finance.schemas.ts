@@ -1,5 +1,5 @@
 import { Schema, type Types } from 'mongoose';
-import { LEDGER_BOOKS, type LedgerBook } from '@skillconnect/contracts';
+import { LEDGER_BOOKS, type LedgerBook } from '@bijliwala/contracts';
 
 /* ------------------------------------------------------------ webhook_events (DATABASE §3) */
 

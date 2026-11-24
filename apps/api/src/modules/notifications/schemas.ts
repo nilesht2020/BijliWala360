@@ -8,7 +8,7 @@ import {
   type NotificationPriority,
   type NotificationStatus,
   type UserType,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 
 /* --------------------------------------------------------- notification_templates (DATABASE §12) */
 

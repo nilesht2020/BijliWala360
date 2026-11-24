@@ -9,7 +9,7 @@ import {
   type DocumentTypeView,
   type DocumentView,
   type UploadIntentResponse,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import type { AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, RequirePermissions } from '../../core/auth/decorators';

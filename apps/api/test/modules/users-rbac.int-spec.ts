@@ -1,4 +1,4 @@
-import { SYSTEM_ROLES } from '@skillconnect/contracts';
+import { SYSTEM_ROLES } from '@bijliwala/contracts';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { NotificationsModule } from '../../src/modules/notifications/notifications.module';
 import { PlatformModule } from '../../src/modules/platform/platform.module';
@@ -60,7 +60,7 @@ describe('Users & RBAC (FR-USR-01..06)', () => {
     });
     expect(res.body.data.assignments).toHaveLength(2);
     const mail = emailOutbox(t.app).sent.find((m) => m.to === email);
-    expect(mail?.subject).toBe('Set up your SkillConnect admin account');
+    expect(mail?.subject).toBe('Set up your Bijli Wala admin account');
 
     const dup = await t
       .http()

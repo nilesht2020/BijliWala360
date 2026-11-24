@@ -670,6 +670,7 @@ describe('Phase 4: companies, enquiries, quotations and jobs', () => {
       });
     expect(file.status).toBe(200);
     expect((file.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+    expect(file.headers['content-disposition']).toMatch(/^inline; filename=".*\.pdf"$/);
   });
 
   it('job lifecycle: hold/resume, headcount guard, schedule impact, cancellation event', async () => {

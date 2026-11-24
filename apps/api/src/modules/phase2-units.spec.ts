@@ -1,4 +1,4 @@
-import { PERMISSIONS } from '@skillconnect/contracts';
+import { PERMISSIONS } from '@bijliwala/contracts';
 import { hashPassword, randomToken, sha256, verifyPassword } from '../core/crypto/password';
 import {
   base32Decode,
@@ -47,7 +47,7 @@ describe('TOTP (RFC 6238 / RFC 4226)', () => {
     expect(base32Decode(base32Encode(raw))).toEqual(raw);
     expect(generateTotpSecret()).toMatch(/^[A-Z2-7]{32}$/);
     expect(otpauthUrl('ABC', 'a@b.test')).toBe(
-      'otpauth://totp/SkillConnect%3Aa%40b.test?secret=ABC&issuer=SkillConnect&algorithm=SHA1&digits=6&period=30',
+      'otpauth://totp/Bijli%20Wala%3Aa%40b.test?secret=ABC&issuer=Bijli+Wala&algorithm=SHA1&digits=6&period=30',
     );
   });
 

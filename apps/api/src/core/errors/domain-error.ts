@@ -1,4 +1,4 @@
-import { httpStatusFor, type ApiErrorDetail, type ErrorCode } from '@skillconnect/contracts';
+import { httpStatusFor, type ApiErrorDetail, type ErrorCode } from '@bijliwala/contracts';
 
 /**
  * Base class for every expected business/technical error. The global exception filter maps it to

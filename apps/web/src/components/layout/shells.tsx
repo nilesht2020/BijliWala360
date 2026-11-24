@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
-import { LogOut, Menu, X } from 'lucide-react';
-import type { Permission } from '@skillconnect/contracts';
+import { LogOut, Menu, X, Zap } from 'lucide-react';
+import { APP_NAME, APP_TAGLINE, type Permission } from '@bijliwala/contracts';
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/app/auth';
@@ -27,12 +27,12 @@ export function Logo({ className }: { className?: string }) {
     <Link
       to="/"
       className={cn('flex items-center gap-2 font-bold tracking-tight', className)}
-      aria-label="SkillConnect home"
+      aria-label={`${APP_NAME} home`}
     >
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
-        S
+      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-bolt">
+        <Zap className="size-5 fill-current" aria-hidden />
       </span>
-      <span className="text-lg">SkillConnect</span>
+      <span className="text-lg">{APP_NAME}</span>
     </Link>
   );
 }
@@ -67,10 +67,12 @@ export function PublicLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t bg-muted/50">
-        <div className="container flex flex-col gap-2 py-8 text-sm text-muted-foreground sm:flex-row sm:justify-between">
-          <span>© {new Date().getFullYear()} SkillConnect</span>
-          <span>Verified professionals and vendors for businesses</span>
+      <footer className="border-t-4 border-bolt bg-primary text-primary-foreground">
+        <div className="container flex flex-col gap-2 py-8 text-sm text-primary-foreground/75 sm:flex-row sm:justify-between">
+          <span className="font-semibold text-primary-foreground">
+            © {new Date().getFullYear()} {APP_NAME}
+          </span>
+          <span>{APP_TAGLINE}</span>
         </div>
       </footer>
     </div>
@@ -90,7 +92,7 @@ function SideNav({ items: all, onNavigate }: { items: NavItem[]; onNavigate?: ()
           className={({ isActive }) =>
             cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-              isActive && 'bg-accent text-accent-foreground hover:bg-accent',
+              isActive && 'bg-accent text-primary shadow-[inset_3px_0_0_hsl(var(--bolt))] hover:bg-accent',
             )
           }
         >

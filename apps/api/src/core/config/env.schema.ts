@@ -34,7 +34,7 @@ export const envSchema = z.object({
 
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 chars'),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
-  JWT_ISSUER: z.string().default('skillconnect'),
+  JWT_ISSUER: z.string().default('bijliwala'),
   REFRESH_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
 
   /** Base64-encoded 32-byte keys, versioned: "1:<b64>,2:<b64>". Highest version encrypts. */
@@ -47,7 +47,7 @@ export const envSchema = z.object({
   LOCAL_STORAGE_DIR: z.string().default('.local-storage'),
   S3_ENDPOINT: z.string().url().optional(),
   S3_REGION: z.string().default('ap-south-1'),
-  S3_BUCKET: z.string().min(1).default('skillconnect-private'),
+  S3_BUCKET: z.string().min(1).default('bijliwala-private'),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_FORCE_PATH_STYLE: bool.default(true),
@@ -66,7 +66,7 @@ export const envSchema = z.object({
   WHATSAPP_PROVIDER: z.enum(['console']).default('console'),
   EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
   SMTP_URL: z.string().optional(),
-  EMAIL_FROM: z.string().default('SkillConnect <no-reply@skillconnect.local>'),
+  EMAIL_FROM: z.string().default('Bijli Wala <no-reply@bijliwala.local>'),
 
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),

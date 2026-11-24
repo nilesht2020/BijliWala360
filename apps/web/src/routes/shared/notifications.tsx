@@ -1,6 +1,6 @@
 import { Bell, CheckCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { NotificationPreferences } from '@skillconnect/contracts';
+import type { NotificationPreferences } from '@bijliwala/contracts';
 import { EmptyState, PageHeader } from '@/components/layout/page-parts';
 import { Button } from '@/components/ui/button';
 import {

@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http as mswHttp, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { SessionUser } from '@skillconnect/contracts';
+import type { SessionUser } from '@bijliwala/contracts';
 import { AuthProvider } from '@/app/auth';
 import { routes } from '@/app/router';
 import { documentUploadApi } from '@/features/providers/api';
@@ -77,6 +77,69 @@ describe('provider onboarding', () => {
     expect(await screen.findByText('Register your business')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Create vendor profile' }));
     expect(await screen.findByText('Enter a valid PAN')).toBeInTheDocument();
+  });
+
+  describe('profile photo after approval', () => {
+    const professional = (status: string) => ({
+      id: 'p1',
+      userId: 'u1',
+      fullName: 'Asha Kumar',
+      languages: [],
+      categoryIds: [],
+      skills: [],
+      availability: {},
+      status,
+      completion: { percent: 100, missing: [] },
+      isMatchable: status === 'APPROVED',
+      createdAt: '2026-11-01T00:00:00.000Z',
+    });
+    const photoType = {
+      code: 'PHOTO',
+      name: 'Profile photo',
+      ownerTypes: ['PROFESSIONAL', 'VENDOR_WORKER'],
+      allowedMime: ['image/jpeg', 'image/png', 'image/webp'],
+      maxSizeBytes: 3 * 1024 * 1024,
+      hasExpiry: false,
+      captureNumber: false,
+    };
+    const useProfessional = (status: string, docs: unknown[]) =>
+      server.use(
+        mswHttp.get(`${base}/professionals/me`, () => ok(professional(status))),
+        mswHttp.get(`${base}/documents/types`, () => ok([photoType])),
+        mswHttp.get(`${base}/documents`, () => ok(docs)),
+        mswHttp.get(`${base}/documents/ph1/download-url`, () =>
+          ok({ url: '/files/ph1.jpg?sig=1', mime: 'image/jpeg', fileName: 'me.jpg' }),
+        ),
+      );
+
+    it('shows the approved professional their profile photo', async () => {
+      me = user('PROFESSIONAL');
+      useProfessional('APPROVED', [
+        { id: 'ph1', typeCode: 'PHOTO', status: 'VERIFIED', fileName: 'me.jpg', mime: 'image/jpeg' },
+      ]);
+      renderAt('/provider/onboarding');
+      const img = await screen.findByRole('img', { name: 'Asha Kumar profile photo' });
+      expect(img).toHaveAttribute('src', '/files/ph1.jpg?sig=1');
+      const card = img.closest('button')?.parentElement as HTMLElement;
+      expect(within(card).getByText('Verified')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Change photo/ })).toBeInTheDocument();
+    });
+
+    it('offers to add a photo when an approved professional has none', async () => {
+      me = user('PROFESSIONAL');
+      useProfessional('APPROVED', []);
+      renderAt('/provider/onboarding');
+      expect(await screen.findByRole('button', { name: /Add profile photo/ })).toBeInTheDocument();
+      expect(screen.getByText('AK')).toBeInTheDocument();
+    });
+
+    it('does not show the photo card before approval', async () => {
+      me = user('PROFESSIONAL');
+      useProfessional('PENDING_VERIFICATION', []);
+      renderAt('/provider/onboarding');
+      expect(await screen.findByText('Registration status')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Add profile photo/ })).not.toBeInTheDocument();
+    });
   });
 
   it('hides the Workers menu from professionals', async () => {

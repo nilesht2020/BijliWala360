@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import { useFieldArray, useForm, type Resolver } from 'react-hook-form';
-import { enquiryCreateSchema, publicEnquirySchema, type SiteView } from '@skillconnect/contracts';
+import { enquiryCreateSchema, publicEnquirySchema, type SiteView } from '@bijliwala/contracts';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
 import { MoneyInput, PhoneInput } from '@/components/forms/inputs';
 import { Button } from '@/components/ui/button';

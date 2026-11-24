@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '@/app/auth';
 import { createRouter } from '@/app/router';
+import { DocumentViewerHost } from '@/components/document-viewer';
 import { createQueryClient } from '@/lib/query-client';
 import '@/styles/globals.css';
 
@@ -18,6 +19,7 @@ createRoot(root).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RouterProvider router={router} future={{ v7_startTransition: true }} />
+        <DocumentViewerHost />
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,

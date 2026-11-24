@@ -12,7 +12,7 @@ import {
   type OtpChallengeResponse,
   type SelfSignupUserType,
   type SessionUser,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useAuth } from '@/app/auth';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
 import { OtpInput, PhoneInput } from '@/components/forms/inputs';

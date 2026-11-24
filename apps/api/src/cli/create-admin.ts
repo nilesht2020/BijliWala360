@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { emailSchema, passwordSchema } from '@skillconnect/contracts';
+import { emailSchema, passwordSchema } from '@bijliwala/contracts';
 import { loadDotEnv } from '../core/config/load-env';
 import { hashPassword } from '../core/crypto/password';
 import { TransactionRunner } from '../core/database/transaction-runner';
@@ -13,7 +13,7 @@ import { CliModule } from './cli.module';
  * Reads ADMIN_EMAIL, ADMIN_NAME and ADMIN_PASSWORD from the environment so the password never
  * appears in shell history or process lists. TOTP enrolment is enforced on first sign-in.
  *
- *   ADMIN_EMAIL=you@company.com ADMIN_NAME="Your Name" ADMIN_PASSWORD='...' pnpm --filter @skillconnect/api cli:create-admin
+ *   ADMIN_EMAIL=you@company.com ADMIN_NAME="Your Name" ADMIN_PASSWORD='...' pnpm --filter @bijliwala/api cli:create-admin
  */
 async function main(): Promise<void> {
   loadDotEnv();

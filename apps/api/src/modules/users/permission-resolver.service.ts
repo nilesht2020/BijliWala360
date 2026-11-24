@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { isPermission, type Permission } from '@skillconnect/contracts';
+import { isPermission, type Permission } from '@bijliwala/contracts';
 import type { PermissionResolver, ResolvedAccess, RoleScope } from '../../core/auth/auth.types';
 import { InjectRedis, type RedisClient } from '../../core/redis/redis.module';
 import { RolesService } from './roles.service';

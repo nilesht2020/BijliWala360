@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { InboxItem, NotificationPreferences } from '@skillconnect/contracts';
+import type { InboxItem, NotificationPreferences } from '@bijliwala/contracts';
 import { useAuth } from '@/app/auth';
 import { api, http } from '@/lib/api-client';
 

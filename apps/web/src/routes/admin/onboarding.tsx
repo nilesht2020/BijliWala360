@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeft, Check, ExternalLink, Pencil, Plus, X } from 'lucide-react';
+import { ArrowLeft, Check, Eye, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   registrationPlanSchema,
   VERIFICATION_STATES,
@@ -13,8 +13,9 @@ import {
   type RegistrationPlanView,
   type RegistrationRefundView,
   type RegistrationView,
+  type SkillView,
   type VendorView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useCan } from '@/app/auth';
 import { DataTable, useListParams } from '@/components/data-table/data-table';
 import { ConfirmDialog } from '@/components/layout/confirm-dialog';
@@ -88,7 +89,11 @@ export function VerificationPage() {
     verificationStatus: status,
     ...(filters.providerType ? { providerType: filters.providerType } : {}),
   });
-  const [tab, setTab] = useState<'registrations' | 'workers' | 'conflicts'>('registrations');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [tab, setTab] = useState<'registrations' | 'workers' | 'conflicts'>(
+    initialTab === 'workers' || initialTab === 'conflicts' ? initialTab : 'registrations',
+  );
 
   return (
     <>
@@ -344,10 +349,10 @@ function DocumentReviewRow({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => void openDocument(doc.id)}
-            aria-label={`Open ${doc.fileName}`}
+            onClick={() => openDocument(doc.id, doc.fileName)}
+            aria-label={`View ${doc.fileName}`}
           >
-            <ExternalLink />
+            <Eye />
           </Button>
           {current && ['UPLOADED', 'VERIFIED', 'REJECTED'].includes(doc.status) && (
             <>
@@ -583,10 +588,12 @@ function CategoryNode({
   c,
   onAddChild,
   onToggle,
+  onDelete,
 }: {
   c: CategoryView;
   onAddChild: (parent: CategoryView) => void;
   onToggle: (c: CategoryView) => void;
+  onDelete: (c: CategoryView) => void;
 }) {
   return (
     <li className="py-1">
@@ -608,12 +615,27 @@ function CategoryNode({
           <Button size="sm" variant="ghost" onClick={() => onToggle(c)}>
             {c.isActive ? 'Hide' : 'Show'}
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            aria-label={`Delete ${c.name}`}
+            onClick={() => onDelete(c)}
+          >
+            <Trash2 />
+          </Button>
         </span>
       </div>
       {!!c.children?.length && (
         <ul className="ml-4 border-l pl-2">
           {c.children.map((ch) => (
-            <CategoryNode key={ch.id} c={ch} onAddChild={onAddChild} onToggle={onToggle} />
+            <CategoryNode
+              key={ch.id}
+              c={ch}
+              onAddChild={onAddChild}
+              onToggle={onToggle}
+              onDelete={onDelete}
+            />
           ))}
         </ul>
       )}
@@ -629,8 +651,64 @@ export function CatalogAdminPage() {
   const [name, setName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [skill, setSkill] = useState({ code: '', name: '', categoryId: '', docs: '' });
+  const [deleting, setDeleting] = useState<CategoryView | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setDeleteError(null);
+    try {
+      await m.deleteCategory.mutateAsync(deleting.id);
+    } catch (e) {
+      setDeleteError((e as ApiError).message);
+      throw e;
+    }
+  };
   const flat = (list: CategoryView[]): CategoryView[] => list.flatMap((c) => [c, ...flat(c.children ?? [])]);
   const all = flat(categories.data ?? []);
+  const catName = new Map(all.map((c) => [c.id, c.name]));
+  const [editingSkill, setEditingSkill] = useState<{
+    skill: SkillView;
+    name: string;
+    categoryIds: string[];
+    docs: string;
+    sacCode: string;
+    isActive: boolean;
+  } | null>(null);
+  const [deletingSkill, setDeletingSkill] = useState<SkillView | null>(null);
+  const [skillError, setSkillError] = useState<string | null>(null);
+  const saveSkill = () => {
+    if (!editingSkill) return;
+    setSkillError(null);
+    m.updateSkill.mutate(
+      {
+        id: editingSkill.skill.id,
+        input: {
+          name: editingSkill.name.trim(),
+          categoryIds: editingSkill.categoryIds,
+          requiredDocTypeCodes: editingSkill.docs
+            .split(',')
+            .map((d) => d.trim().toUpperCase())
+            .filter(Boolean),
+          ...(editingSkill.sacCode.trim() ? { sacCode: editingSkill.sacCode.trim() } : {}),
+          isActive: editingSkill.isActive,
+        },
+      },
+      {
+        onSuccess: () => setEditingSkill(null),
+        onError: (e) => setSkillError((e as ApiError).message),
+      },
+    );
+  };
+  const confirmDeleteSkill = async () => {
+    if (!deletingSkill) return;
+    setSkillError(null);
+    try {
+      await m.deleteSkill.mutateAsync(deletingSkill.id);
+    } catch (e) {
+      setSkillError((e as ApiError).message);
+      throw e;
+    }
+  };
   const err = (m.createCategory.error ?? m.createSkill.error ?? m.updateCategory.error) as ApiError | null;
 
   return (
@@ -661,6 +739,10 @@ export function CatalogAdminPage() {
                     onToggle={(cat) =>
                       m.updateCategory.mutate({ id: cat.id, input: { isActive: !cat.isActive } })
                     }
+                    onDelete={(cat) => {
+                      setDeleteError(null);
+                      setDeleting(cat);
+                    }}
                   />
                 ))}
               </ul>
@@ -674,11 +756,46 @@ export function CatalogAdminPage() {
           <CardContent className="flex flex-col gap-4">
             <ul className="divide-y text-sm">
               {skills.data?.map((s) => (
-                <li key={s.id} className="flex items-center justify-between py-2">
-                  <span>
+                <li key={s.id} className="flex items-center justify-between gap-2 py-2">
+                  <span className={cn('min-w-0', !s.isActive && 'text-muted-foreground line-through')}>
                     {s.name} <span className="font-mono text-xs text-muted-foreground">{s.code}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {s.categoryIds.map((id) => catName.get(id) ?? '?').join(', ')}
+                      {s.requiredDocTypeCodes.length > 0 && ` · docs: ${s.requiredDocTypeCodes.join(', ')}`}
+                    </span>
                   </span>
-                  <span className="text-xs text-muted-foreground">{s.requiredDocTypeCodes.join(', ')}</span>
+                  <span className="flex shrink-0 gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Edit ${s.name}`}
+                      onClick={() => {
+                        setSkillError(null);
+                        setEditingSkill({
+                          skill: s,
+                          name: s.name,
+                          categoryIds: s.categoryIds,
+                          docs: s.requiredDocTypeCodes.join(', '),
+                          sacCode: s.sacCode ?? '',
+                          isActive: s.isActive,
+                        });
+                      }}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      aria-label={`Delete ${s.name}`}
+                      onClick={() => {
+                        setSkillError(null);
+                        setDeletingSkill(s);
+                      }}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -741,6 +858,101 @@ export function CatalogAdminPage() {
         </Card>
       </div>
       <PlansAdmin />
+      <ConfirmDialog
+        open={!!deletingSkill}
+        onOpenChange={(o) => !o && setDeletingSkill(null)}
+        title={`Delete skill "${deletingSkill?.name ?? ''}"?`}
+        description="This permanently removes the skill. A skill used by providers, vendor workers, enquiries, quotations or jobs cannot be deleted; deactivate it instead (Edit, then untick Active)."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDeleteSkill}
+      >
+        {skillError && <Alert>{skillError}</Alert>}
+      </ConfirmDialog>
+      <Dialog open={!!editingSkill} onOpenChange={(o) => !o && setEditingSkill(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit skill {editingSkill?.skill.code}</DialogTitle>
+          </DialogHeader>
+          {editingSkill && (
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="skill-edit-name">Name</Label>
+              <Input
+                id="skill-edit-name"
+                value={editingSkill.name}
+                onChange={(e) => setEditingSkill({ ...editingSkill, name: e.target.value })}
+              />
+              <span className="text-sm font-medium">Categories</span>
+              <div className="max-h-48 overflow-y-auto rounded-md border p-2">
+                {all.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 py-0.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={editingSkill.categoryIds.includes(c.id)}
+                      onChange={(e) =>
+                        setEditingSkill({
+                          ...editingSkill,
+                          categoryIds: e.target.checked
+                            ? [...editingSkill.categoryIds, c.id]
+                            : editingSkill.categoryIds.filter((id) => id !== c.id),
+                        })
+                      }
+                    />
+                    {'— '.repeat(c.level - 1)}
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+              <Label htmlFor="skill-edit-docs">Required document codes (comma separated)</Label>
+              <Input
+                id="skill-edit-docs"
+                value={editingSkill.docs}
+                onChange={(e) => setEditingSkill({ ...editingSkill, docs: e.target.value.toUpperCase() })}
+              />
+              <Label htmlFor="skill-edit-sac">SAC code (optional)</Label>
+              <Input
+                id="skill-edit-sac"
+                value={editingSkill.sacCode}
+                onChange={(e) => setEditingSkill({ ...editingSkill, sacCode: e.target.value })}
+              />
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={editingSkill.isActive}
+                  onChange={(e) => setEditingSkill({ ...editingSkill, isActive: e.target.checked })}
+                />
+                Active (inactive skills are not offered for new registrations or enquiries)
+              </label>
+              {skillError && <Alert>{skillError}</Alert>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingSkill(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                !editingSkill || editingSkill.name.trim().length < 2 || editingSkill.categoryIds.length === 0
+              }
+              loading={m.updateSkill.isPending}
+              onClick={saveSkill}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title={`Delete "${deleting?.name ?? ''}"?`}
+        description="This permanently removes the category. A category that has sub-categories or skills, or is used by providers, enquiries or jobs, cannot be deleted; hide it instead."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDelete}
+      >
+        {deleteError && <Alert>{deleteError}</Alert>}
+      </ConfirmDialog>
       <Dialog open={!!adding} onOpenChange={(o) => !o && setAdding(null)}>
         <DialogContent>
           <DialogHeader>
@@ -892,7 +1104,11 @@ function PlansAdmin() {
 /* =============================================================== finance: registration payments & refunds */
 
 export function FinancePage() {
-  const [tab, setTab] = useState<'offline' | 'all' | 'refunds'>('offline');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [tab, setTab] = useState<'offline' | 'all' | 'refunds'>(
+    initialTab === 'all' || initialTab === 'refunds' ? initialTab : 'offline',
+  );
   const offline = useRegistrationPayments({
     page: 1,
     pageSize: 50,
@@ -928,10 +1144,10 @@ export function FinancePage() {
           <Button
             size="sm"
             variant="ghost"
-            aria-label="Open payment proof"
-            onClick={() => void openDocument(p.offline?.proofDocId ?? '')}
+            aria-label="View payment proof"
+            onClick={() => openDocument(p.offline?.proofDocId ?? '', 'Payment proof')}
           >
-            <ExternalLink />
+            <Eye />
           </Button>
         )}
         {actions ? (

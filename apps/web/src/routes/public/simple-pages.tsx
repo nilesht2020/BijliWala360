@@ -19,7 +19,7 @@ export function BecomeProviderPage() {
   ];
   return (
     <section className="container max-w-4xl py-14">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Grow your work with SkillConnect</h1>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Grow your work with Bijli Wala</h1>
       <p className="mt-3 text-lg text-muted-foreground">
         A one-time registration fee, document verification and admin approval keep the marketplace trustworthy
         for everyone.

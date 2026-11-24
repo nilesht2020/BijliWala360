@@ -44,7 +44,7 @@ import {
   type WorkerStatus,
   type WorkerUpdateInput,
   type WorkerView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, RequirePermissions } from '../../core/auth/decorators';

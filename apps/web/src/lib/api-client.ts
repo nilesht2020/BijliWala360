@@ -11,7 +11,7 @@ import {
   type ApiSuccess,
   type CursorMeta,
   type PageMeta,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 
 /** Normalised error thrown by every API call (mirrors the server error envelope). */
 export class ApiError extends Error {

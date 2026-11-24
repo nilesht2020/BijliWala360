@@ -2,7 +2,7 @@ import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tan
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PAGE_SIZE_DEFAULT, type PageMeta } from '@skillconnect/contracts';
+import { PAGE_SIZE_DEFAULT, type PageMeta } from '@bijliwala/contracts';
 import { EmptyState } from '@/components/layout/page-parts';
 import { Button } from '@/components/ui/button';
 import {

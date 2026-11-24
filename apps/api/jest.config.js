@@ -5,7 +5,7 @@ const shared = {
   moduleNameMapper: {
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
-    '^@skillconnect/contracts$': '<rootDir>/../../packages/contracts/src',
+    '^@bijliwala/contracts$': '<rootDir>/../../packages/contracts/src',
   },
   transform: { '^.+\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }] },
 };

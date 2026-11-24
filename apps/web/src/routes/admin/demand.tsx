@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeft, FileDown, Plus, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, Plus, Send, Trash2 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useFieldArray, useForm, useWatch, type Resolver } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -25,7 +25,7 @@ import {
   type JobView,
   type QuotationInput,
   type QuotationView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useAuth, useCan } from '@/app/auth';
 import { DataTable, useListParams } from '@/components/data-table/data-table';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
@@ -1388,7 +1388,6 @@ export function QuotationBuilderPage() {
   const quotation = useAdminQuotation(id);
   const actions = useAdminQuotationActions(id);
   const [sending, setSending] = useState(false);
-  const [pdfBusy, setPdfBusy] = useState(false);
   const initial = useMemo(() => (quotation.data ? toInput(quotation.data) : null), [quotation.data]);
   if (quotation.isLoading || !initial) return <Skeleton className="h-96 w-full" />;
   const q = quotation.data as QuotationView;
@@ -1406,17 +1405,9 @@ export function QuotationBuilderPage() {
             <Button
               size="sm"
               variant="outline"
-              loading={pdfBusy}
-              onClick={async () => {
-                setPdfBusy(true);
-                try {
-                  await openPdf(`/admin/quotations/${q.id}/pdf-url`);
-                } finally {
-                  setPdfBusy(false);
-                }
-              }}
+              onClick={() => openPdf(`/admin/quotations/${q.id}/pdf-url`, `${q.quotationNo} · v${q.version}`)}
             >
-              <FileDown aria-hidden /> {draft ? 'Preview PDF' : 'PDF'}
+              <Eye aria-hidden /> {draft ? 'Preview PDF' : 'View PDF'}
             </Button>
             {draft && (
               <Button size="sm" onClick={() => setSending(true)}>

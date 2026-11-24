@@ -1,5 +1,5 @@
 import { createParamDecorator, SetMetadata, type ExecutionContext } from '@nestjs/common';
-import type { Permission } from '@skillconnect/contracts';
+import type { Permission } from '@bijliwala/contracts';
 import type { AuthUser } from './auth.types';
 
 export const IS_PUBLIC = 'auth:isPublic';

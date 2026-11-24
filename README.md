@@ -1,12 +1,16 @@
-# SkillConnect
+# Bijli Wala
 
-B2B service marketplace: companies source verified individual professionals and vendor workforces,
-with **admin-controlled allocation**, one-time provider registration fees, and online (Razorpay) plus
-offline business payments with full reconciliation.
+Pan-India technical manpower supply, workforce management and advertising platform. Bijli Wala
+registers and verifies electricians, plumbers, HVAC technicians, engineers and other technical staff,
+supplies them to client organisations through quotation, work order and **admin-controlled allocation**,
+manages attendance, payroll, billing and payments, and sells dynamic ad placements to industrial brands.
+
+The primary requirement document is [docs/bijli wala .docx](docs/bijli%20wala%20.docx); the SRS maps it
+onto this codebase and the development plan tracks what is built and what is next.
 
 | Document | Purpose |
 |---|---|
-| [docs/SRS.md](docs/SRS.md) | Requirements |
+| [docs/SRS.md](docs/SRS.md) | Requirements (v2.0, aligned with the requirement document) |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Modular monolith design, concurrency and payment flows |
 | [docs/DATABASE.md](docs/DATABASE.md) | Collections, indexes, transaction boundaries |
 | [docs/API.md](docs/API.md) | REST contract, permissions, error codes |
@@ -22,6 +26,11 @@ packages/contracts  Shared Zod schemas, enums, error codes, permissions, busines
 packages/tsconfig   Strict TypeScript bases
 infra/              Docker Compose (dev dependencies), Dockerfiles, Nginx config
 ```
+
+> **Renamed from SkillConnect.** Packages are now `@bijliwala/*`, and the dev database, bucket and MinIO
+> credentials changed from `skillconnect` to `bijliwala`. Copy the new values from `.env.example` and
+> recreate the dev containers (`docker compose ... down -v && ... up -d`), or point `.env` at your old
+> database name to keep existing local data.
 
 ## Prerequisites
 
@@ -46,9 +55,9 @@ Create the first Super Admin. The credentials come from environment variables ra
 arguments, and two-factor setup happens on first sign-in at `/admin/login`:
 
 ```bash
-pnpm --filter @skillconnect/api build
+pnpm --filter @bijliwala/api build
 ADMIN_EMAIL=you@company.com ADMIN_NAME="Your Name" ADMIN_PASSWORD='a-long-password-123' \
-  pnpm --filter @skillconnect/api cli:create-admin
+  pnpm --filter @bijliwala/api cli:create-admin
 ```
 
 In development, SMS and email go to the console adapters, so OTP codes and password links appear in
@@ -67,7 +76,7 @@ Release step for databases (indexes are declared on the Mongoose schemas; produc
 `autoIndex` off):
 
 ```bash
-pnpm --filter @skillconnect/api build && pnpm --filter @skillconnect/api db:sync-indexes
+pnpm --filter @bijliwala/api build && pnpm --filter @bijliwala/api db:sync-indexes
 ```
 
 ## Quality gates
@@ -76,9 +85,9 @@ pnpm --filter @skillconnect/api build && pnpm --filter @skillconnect/api db:sync
 pnpm exec eslint apps/api/src apps/api/test apps/web/src packages/contracts/src
 pnpm format:check
 pnpm typecheck
-pnpm --filter @skillconnect/contracts test
-pnpm --filter @skillconnect/api test        # unit + integration (in-memory replica set)
-pnpm --filter @skillconnect/web test
+pnpm --filter @bijliwala/contracts test
+pnpm --filter @bijliwala/api test        # unit + integration (in-memory replica set)
+pnpm --filter @bijliwala/web test
 ```
 
 ## Conventions (short version)

@@ -58,7 +58,7 @@ interface StorageDriver {
     sizeBytes: number,
     ttlSeconds: number,
   ): Promise<PresignedUpload>;
-  presignDownload(key: string, ttlSeconds: number, downloadName?: string): Promise<string>;
+  presignDownload(key: string, ttlSeconds: number, options?: DownloadOptions): Promise<string>;
   head(key: string): Promise<ObjectHead | null>;
   getBuffer(key: string, maxBytes: number): Promise<Buffer>;
   putBuffer(key: string, body: Buffer, contentType: string): Promise<void>;
@@ -66,8 +66,18 @@ interface StorageDriver {
   delete(key: string): Promise<void>;
 }
 
-function contentDisposition(name: string): string {
-  return `attachment; filename="${name.replace(/[^\w.\- ]/g, '_')}"`;
+export interface DownloadOptions {
+  /** File name suggested to the browser. */
+  fileName?: string;
+  /**
+   * `true` lets the browser display the file in the tab (PDF viewer / image) instead of
+   * saving it. Only use for content whose type was verified on upload (PDF, JPEG, PNG, WebP).
+   */
+  inline?: boolean;
+}
+
+function contentDisposition(name: string, inline = false): string {
+  return `${inline ? 'inline' : 'attachment'}; filename="${name.replace(/[^\w.\- ]/g, '_')}"`;
 }
 
 /* --------------------------------------------------------------------------- S3 */
@@ -109,11 +119,16 @@ class S3Driver implements StorageDriver {
     };
   }
 
-  presignDownload(key: string, ttlSeconds: number, downloadName?: string): Promise<string> {
+  presignDownload(key: string, ttlSeconds: number, options: DownloadOptions = {}): Promise<string> {
+    const { fileName, inline } = options;
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
-      ...(downloadName ? { ResponseContentDisposition: contentDisposition(downloadName) } : {}),
+      ...(fileName
+        ? { ResponseContentDisposition: contentDisposition(fileName, inline) }
+        : inline
+          ? { ResponseContentDisposition: 'inline' }
+          : {}),
     });
     return getSignedUrl(this.s3, command, { expiresIn: ttlSeconds });
   }
@@ -224,14 +239,16 @@ export class LocalDiskDriver implements StorageDriver {
     };
   }
 
-  async presignDownload(key: string, ttlSeconds: number, downloadName?: string): Promise<string> {
+  async presignDownload(key: string, ttlSeconds: number, options: DownloadOptions = {}): Promise<string> {
     this.pathFor(key);
     const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
-    const name = downloadName ?? '';
+    const name = options.fileName ?? '';
+    const inline = options.inline ? '1' : '';
     const qs = new URLSearchParams({
       exp: String(exp),
-      sig: this.sign('get', key, exp, name),
+      sig: this.sign('get', key, exp, `${name}|${inline}`),
       ...(name ? { name } : {}),
+      ...(inline ? { inline } : {}),
     });
     return `/api/v1/dev-storage/${encodeURIComponent(key)}?${qs.toString()}`;
   }
@@ -303,8 +320,8 @@ export class StorageService implements StorageDriver {
   ): Promise<PresignedUpload> {
     return this.driver.presignUpload(key, contentType, sizeBytes, ttlSeconds);
   }
-  presignDownload(key: string, ttlSeconds: number, downloadName?: string): Promise<string> {
-    return this.driver.presignDownload(key, ttlSeconds, downloadName);
+  presignDownload(key: string, ttlSeconds: number, options?: DownloadOptions): Promise<string> {
+    return this.driver.presignDownload(key, ttlSeconds, options);
   }
   head(key: string): Promise<ObjectHead | null> {
     return this.driver.head(key);
@@ -375,14 +392,19 @@ export class DevStorageController {
     @Res() res: Response,
   ): Promise<void> {
     const driver = this.driver();
-    if (!driver.verify('get', key, Number(q.exp), q.sig ?? '', q.name ?? '')) {
+    const inline = q.inline === '1';
+    if (!driver.verify('get', key, Number(q.exp), q.sig ?? '', `${q.name ?? ''}|${inline ? '1' : ''}`)) {
       throw new DomainError('FORBIDDEN', 'Download URL is invalid or has expired.');
     }
     const head = await driver.head(key);
     if (!head) throw new DomainError('NOT_FOUND', 'File not found.');
     res.setHeader('Content-Type', head.contentType ?? 'application/octet-stream');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    if (q.name) res.setHeader('Content-Disposition', contentDisposition(q.name));
+    if (q.name) res.setHeader('Content-Disposition', contentDisposition(q.name, inline));
+    else if (inline) res.setHeader('Content-Disposition', 'inline');
+    // Helmet's CSP (object-src 'none') stops the browser's PDF viewer rendering inside the app's
+    // viewer frame. Like S3 in production, serve verified inline files without it.
+    if (inline) res.removeHeader('Content-Security-Policy');
     res.send(await driver.getBuffer(key, MAX_DEV_UPLOAD_BYTES));
   }
 }

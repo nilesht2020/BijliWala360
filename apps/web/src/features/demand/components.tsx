@@ -7,7 +7,7 @@ import {
   type JobPositionView,
   type QuotationView,
   type Shift,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { FormField } from '@/components/forms/form-field';
 import { PhoneInput } from '@/components/forms/inputs';
 import { Button } from '@/components/ui/button';

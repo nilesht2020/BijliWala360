@@ -9,7 +9,7 @@ import {
   type NotificationPreferences,
   type NotificationPriority,
   type NotificationRequestPayload,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { BusinessConfigService } from '../../core/business-config/business-config.service';
 import {
   EMAIL_PROVIDER,

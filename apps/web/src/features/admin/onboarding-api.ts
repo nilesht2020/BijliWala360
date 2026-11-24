@@ -11,9 +11,10 @@ import type {
   RegistrationRefundView,
   RegistrationView,
   SkillCreateInput,
+  SkillUpdateInput,
   SkillView,
   WorkerView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { api } from '@/lib/api-client';
 import { newIdempotencyKey } from '@/lib/utils';
 
@@ -147,8 +148,21 @@ export function useCatalogMutations() {
         api.patch<CategoryView>(`/admin/categories/${v.id}`, v.input),
       onSuccess: invalidate,
     }),
+    deleteCategory: useMutation({
+      mutationFn: (id: string) => api.delete<{ id: string; deleted: true }>(`/admin/categories/${id}`),
+      onSuccess: invalidate,
+    }),
     createSkill: useMutation({
       mutationFn: (v: SkillCreateInput) => api.post<SkillView>('/admin/skills', v),
+      onSuccess: invalidate,
+    }),
+    updateSkill: useMutation({
+      mutationFn: (v: { id: string; input: SkillUpdateInput }) =>
+        api.patch<SkillView>(`/admin/skills/${v.id}`, v.input),
+      onSuccess: invalidate,
+    }),
+    deleteSkill: useMutation({
+      mutationFn: (id: string) => api.delete<{ id: string; deleted: true }>(`/admin/skills/${id}`),
       onSuccess: invalidate,
     }),
   };

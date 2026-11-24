@@ -18,7 +18,7 @@ import {
   type RegistrationView,
   type VendorCreateInput,
   type VendorView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { useAuth } from '@/app/auth';
 import { FileUpload } from '@/components/forms/file-upload';
 import { applyServerErrors, FormField } from '@/components/forms/form-field';
@@ -41,6 +41,7 @@ import {
   documentUploadApi,
   openDocument,
   useCategories,
+  useDocumentImageUrl,
   useDocuments,
   useDocumentTypes,
   useInvalidateProvider,
@@ -148,6 +149,90 @@ function StatusBanner({
 
 const EDITABLE: ProviderStatus[] = ['DRAFT', 'PENDING_PAYMENT', 'CHANGES_REQUESTED'];
 
+/* =============================================================== profile photo (after approval) */
+
+function initials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join('') || '?'
+  );
+}
+
+/**
+ * Shown once a professional is approved: their profile photo with name and verified badge, and a
+ * control to add or change the photo (uploaded as the PHOTO document; the old one is superseded).
+ */
+function ProfilePhotoCard({ pro }: { pro: ProfessionalView }) {
+  const invalidate = useInvalidateProvider();
+  const types = useDocumentTypes();
+  const docs = useDocuments('PROFESSIONAL', pro.id);
+  const photoType = types.data?.find((t) => t.code === 'PHOTO');
+  const photo = docs.data?.find((d) => d.typeCode === 'PHOTO' && d.status !== 'REJECTED');
+  const photoUrl = useDocumentImageUrl(photo?.id);
+  const [broken, setBroken] = useState(false);
+  const showImage = !!photoUrl.data && !broken;
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center gap-4 pt-6 sm:flex-row sm:items-center">
+        <button
+          type="button"
+          className="relative size-24 shrink-0 overflow-hidden rounded-full border-2 border-success bg-accent text-2xl font-bold text-primary disabled:cursor-default"
+          onClick={() => photo && openDocument(photo.id, 'Profile photo')}
+          disabled={!photo}
+          aria-label={photo ? 'View profile photo' : undefined}
+        >
+          {showImage ? (
+            <img
+              src={photoUrl.data}
+              alt={`${pro.fullName} profile photo`}
+              className="size-full object-cover"
+              onError={() => setBroken(true)}
+            />
+          ) : photoUrl.isLoading ? (
+            <Skeleton className="size-full rounded-full" />
+          ) : (
+            <span aria-hidden className="flex size-full items-center justify-center">
+              {initials(pro.fullName)}
+            </span>
+          )}
+        </button>
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+          <p className="flex items-center gap-2 text-lg font-semibold">
+            {pro.fullName}
+            <Badge tone="success">
+              <CheckCircle2 className="mr-1 size-3" aria-hidden /> Verified
+            </Badge>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {photo
+              ? 'This photo is shown to companies when you are assigned to a job.'
+              : 'Add a clear photo of your face. Companies see it when you are assigned to a job.'}
+          </p>
+        </div>
+        {photoType && (
+          <div className="w-full sm:w-auto">
+            <FileUpload
+              accept={photoType.allowedMime}
+              maxSizeBytes={photoType.maxSizeBytes}
+              label={photo ? 'Change photo' : 'Add profile photo'}
+              api={documentUploadApi({ typeCode: 'PHOTO', owner: { type: 'PROFESSIONAL', id: pro.id } })}
+              onUploaded={() => {
+                setBroken(false);
+                void invalidate();
+              }}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* =============================================================== documents */
 
 function DocumentRow({
@@ -185,7 +270,7 @@ function DocumentRow({
             <button
               type="button"
               className="inline-flex items-center gap-1 text-primary hover:underline"
-              onClick={() => void openDocument(current.id)}
+              onClick={() => openDocument(current.id, current.fileName)}
             >
               <FileText className="size-3" /> {current.fileName}
             </button>
@@ -859,6 +944,7 @@ function ProfessionalOnboarding() {
   const editable = EDITABLE.includes(p.status);
   return (
     <div className="flex flex-col gap-6">
+      {p.status === 'APPROVED' && <ProfilePhotoCard pro={p} />}
       <StatusBanner status={p.status} registration={registration.data} />
       <Section
         step={1}
@@ -1232,7 +1318,7 @@ export function OnboardingPage() {
     <>
       <PageHeader
         title="Registration"
-        description="Get verified to start receiving work through SkillConnect."
+        description="Get verified to start receiving work through Bijli Wala."
       />
       {user?.userType === 'VENDOR' ? <VendorOnboarding /> : <ProfessionalOnboarding />}
     </>

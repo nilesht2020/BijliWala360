@@ -39,7 +39,7 @@ import {
   type QuotationView,
   type SupplyType,
   type TaxTotals,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, PlatformOnly, RequirePermissions } from '../../core/auth/decorators';
@@ -782,7 +782,7 @@ export class QuotationsService implements OnModuleInit {
     if (q.validUntil < todayIn())
       throw new DomainError(
         'QUOTATION_EXPIRED',
-        'This quotation has expired. Ask SkillConnect for a revised quotation.',
+        'This quotation has expired. Ask Bijli Wala for a revised quotation.',
       );
     const company = await this.companies.requireActive(q.companyId);
     const site = await this.companies.requireActiveSite(company._id, q.siteId.toHexString());
@@ -1011,7 +1011,7 @@ export class QuotationsService implements OnModuleInit {
     const url = await this.storage.presignDownload(
       (withPdf.pdf as NonNullable<QuotationDoc['pdf']>).key,
       ttl,
-      `${q.quotationNo}-v${q.version}.pdf`,
+      { fileName: `${q.quotationNo}-v${q.version}.pdf`, inline: true },
     );
     return { url };
   }

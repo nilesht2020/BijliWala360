@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Injectable,
   Logger,
@@ -12,8 +13,8 @@ import {
   type OnApplicationBootstrap,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { InjectModel, MongooseModule } from '@nestjs/mongoose';
-import { Schema, Types, type Model } from 'mongoose';
+import { InjectConnection, InjectModel, MongooseModule } from '@nestjs/mongoose';
+import { Schema, Types, type Connection, type Model } from 'mongoose';
 import { z } from 'zod';
 import {
   categoryCreateSchema,
@@ -27,7 +28,7 @@ import {
   type SkillCreateInput,
   type SkillUpdateInput,
   type SkillView,
-} from '@skillconnect/contracts';
+} from '@bijliwala/contracts';
 import { actorFromUser, AuditService, type AuditContext } from '../../core/audit/audit.service';
 import type { AuthUser } from '../../core/auth/auth.types';
 import { CurrentUser, Public, RequirePermissions } from '../../core/auth/decorators';
@@ -201,6 +202,7 @@ export class CatalogService implements OnApplicationBootstrap {
 
   constructor(
     @InjectModel(CATEGORY_MODEL) private readonly categories: Model<CategoryDoc>,
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(SKILL_MODEL) private readonly skills: Model<SkillDoc>,
     private readonly audit: AuditService,
   ) {}
@@ -355,6 +357,51 @@ export class CatalogService implements OnApplicationBootstrap {
     }
   }
 
+  /**
+   * Hard-deletes a category (SRS FR-CAT-04). Refused with CATEGORY_IN_USE while anything refers to
+   * it - sub-categories, skills, providers, enquiries or jobs - because those records would lose
+   * their category name. Such categories are hidden (isActive=false) instead.
+   */
+  async deleteCategory(id: string, user: AuthUser, ctx: AuditContext): Promise<void> {
+    const before = await this.getById(id);
+    const oid = before._id;
+    const db = this.connection.db;
+    if (!db) throw new Error('Database connection is not ready');
+    const [children, skills, professionals, vendors, enquiries, jobs] = await Promise.all([
+      this.categories.countDocuments({ parentId: oid }).exec(),
+      this.skills.countDocuments({ categoryIds: oid }).exec(),
+      db.collection('professionals').countDocuments({ categoryIds: oid }, { limit: 1 }),
+      db.collection('vendors').countDocuments({ categoryIds: oid }, { limit: 1 }),
+      db.collection('enquiries').countDocuments({ categoryId: oid }, { limit: 1 }),
+      db.collection('jobs').countDocuments({ categoryId: oid }, { limit: 1 }),
+    ]);
+    const usedBy = [
+      children && 'sub-categories',
+      skills && 'skills',
+      professionals && 'professionals',
+      vendors && 'vendors',
+      enquiries && 'enquiries',
+      jobs && 'jobs',
+    ].filter(Boolean) as string[];
+    if (usedBy.length) {
+      throw new DomainError(
+        'CATEGORY_IN_USE',
+        `"${before.name}" is used by ${usedBy.join(', ')}, so it cannot be deleted. Hide it instead.`,
+        usedBy.map((u) => ({ field: 'id', message: u })),
+      );
+    }
+    const res = await this.categories.deleteOne({ _id: oid }).exec();
+    if (res.deletedCount === 0) throw new NotFoundError('Category', id);
+    await this.audit.record({
+      actor: actorFromUser(user),
+      action: 'category.delete',
+      entityType: 'ServiceCategory',
+      entityId: id,
+      before: toCategoryView(before),
+      context: ctx,
+    });
+  }
+
   /* ------------------------------ skills */
 
   async listSkills(categoryId?: string, includeInactive = false): Promise<SkillView[]> {
@@ -471,6 +518,48 @@ export class CatalogService implements OnApplicationBootstrap {
     });
     return toSkillView(doc);
   }
+
+  /**
+   * Hard-deletes a skill. Refused with SKILL_IN_USE while providers, vendor workers, enquiries,
+   * quotations or jobs refer to it, because those records would lose the skill name; deactivate it
+   * (isActive=false) instead.
+   */
+  async deleteSkill(id: string, user: AuthUser, ctx: AuditContext): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundError('Skill', id);
+    const before = await this.skills.findById(id).lean<SkillDoc>().exec();
+    if (!before) throw new NotFoundError('Skill', id);
+    const oid = before._id;
+    const db = this.connection.db;
+    if (!db) throw new Error('Database connection is not ready');
+    const refs: Array<[string, string, string]> = [
+      ['professionals', 'skills.skillId', 'professionals'],
+      ['vendor_workers', 'skills.skillId', 'vendor workers'],
+      ['enquiries', 'lines.skillId', 'enquiries'],
+      ['quotations', 'lines.skillId', 'quotations'],
+      ['jobs', 'positions.skillId', 'jobs'],
+    ];
+    const counts = await Promise.all(
+      refs.map(([coll, field]) => db.collection(coll).countDocuments({ [field]: oid }, { limit: 1 })),
+    );
+    const usedBy = refs.filter((_, k) => counts[k]).map(([, , label]) => label);
+    if (usedBy.length) {
+      throw new DomainError(
+        'SKILL_IN_USE',
+        `"${before.name}" is used by ${usedBy.join(', ')}, so it cannot be deleted. Deactivate it instead.`,
+        usedBy.map((u) => ({ field: 'id', message: u })),
+      );
+    }
+    const res = await this.skills.deleteOne({ _id: oid }).exec();
+    if (res.deletedCount === 0) throw new NotFoundError('Skill', id);
+    await this.audit.record({
+      actor: actorFromUser(user),
+      action: 'skill.delete',
+      entityType: 'Skill',
+      entityId: id,
+      before: toSkillView(before),
+      context: ctx,
+    });
+  }
 }
 
 /* ================================================================ controllers */
@@ -548,6 +637,17 @@ export class AdminCatalogController {
     return this.catalog.updateCategory(id, dto, user, ctx);
   }
 
+  @Delete('categories/:id')
+  @RequirePermissions('category.manage')
+  async deleteCategory(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @ReqContext() ctx: AuditContext,
+  ): Promise<{ id: string; deleted: true }> {
+    await this.catalog.deleteCategory(id, user, ctx);
+    return { id, deleted: true };
+  }
+
   @Get('skills')
   @RequirePermissions('skill.manage')
   skills(@Query() q: SkillsQuery): Promise<SkillView[]> {
@@ -575,6 +675,17 @@ export class AdminCatalogController {
     @ReqContext() ctx: AuditContext,
   ): Promise<SkillView> {
     return this.catalog.updateSkill(id, dto, user, ctx);
+  }
+
+  @Delete('skills/:id')
+  @RequirePermissions('skill.manage')
+  async deleteSkill(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @ReqContext() ctx: AuditContext,
+  ): Promise<{ id: string; deleted: true }> {
+    await this.catalog.deleteSkill(id, user, ctx);
+    return { id, deleted: true };
   }
 }
 

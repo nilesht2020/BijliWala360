@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types, type Model } from 'mongoose';
 import { timingSafeEqual } from 'node:crypto';
-import type { OtpChallengeResponse } from '@skillconnect/contracts';
+import type { OtpChallengeResponse } from '@bijliwala/contracts';
 import { BusinessConfigService } from '../../core/business-config/business-config.service';
 import { AppConfig } from '../../core/config/app-config';
 import { SMS_PROVIDER, type SmsProvider } from '../../core/channels/channels';
@@ -87,7 +87,7 @@ export class OtpService {
     try {
       await this.sms.send({
         to: mobile,
-        body: `${code} is your SkillConnect verification code. It expires in ${Math.round(ttl / 60)} minutes. Do not share it with anyone.`,
+        body: `${code} is your Bijli Wala verification code. It expires in ${Math.round(ttl / 60)} minutes. Do not share it with anyone.`,
       });
     } catch (err) {
       await this.challenges.deleteOne({ _id: challenge._id });

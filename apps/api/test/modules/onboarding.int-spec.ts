@@ -1,5 +1,5 @@
 import { getModelToken } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
+import { Types, type Model } from 'mongoose';
 import { OUTBOX_MODEL, type OutboxDoc } from '../../src/core/database/core.schemas';
 import { FakePaymentGateway, PaymentGateway } from '../../src/core/finance/payment-gateway';
 import { DomainEventBus } from '../../src/core/outbox/event-bus';
@@ -260,6 +260,131 @@ describe('Phase 3: catalogue, documents, provider onboarding and registration pa
       const detail = await t.http().get('/api/v1/public/categories/electrical').expect(200);
       expect(detail.body.data.skills.map((s: { code: string }) => s.code)).toEqual(['ELECTRICIAN']);
     });
+
+    it('edits skills, deletes unused ones and refuses skills still in use', async () => {
+      const cat = (
+        await t
+          .http()
+          .post('/api/v1/admin/categories')
+          .set(bearer(superToken))
+          .send({ name: 'Painting' })
+          .expect(201)
+      ).body.data;
+      const painter = (
+        await t
+          .http()
+          .post('/api/v1/admin/skills')
+          .set(bearer(superToken))
+          .send({ code: 'PAINTER', name: 'Painter', categoryIds: [cat.id] })
+          .expect(201)
+      ).body.data;
+
+      const edited = await t
+        .http()
+        .patch(`/api/v1/admin/skills/${painter.id}`)
+        .set(bearer(superToken))
+        .send({ name: 'Wall painter', requiredDocTypeCodes: ['PHOTO'], isActive: false })
+        .expect(200);
+      expect(edited.body.data).toMatchObject({
+        code: 'PAINTER',
+        name: 'Wall painter',
+        requiredDocTypeCodes: ['PHOTO'],
+        isActive: false,
+      });
+
+      // Unused skill: deleted, then gone.
+      await t.http().delete(`/api/v1/admin/skills/${painter.id}`).set(bearer(superToken)).expect(200);
+      await t.http().delete(`/api/v1/admin/skills/${painter.id}`).set(bearer(superToken)).expect(404);
+      const list = await t.http().get('/api/v1/admin/skills').set(bearer(superToken)).expect(200);
+      expect(list.body.data.map((x: { code: string }) => x.code)).not.toContain('PAINTER');
+
+      // A skill a professional has declared is in use.
+      const user = await signUpViaOtp(t, t.agent(), { userType: 'PROFESSIONAL' });
+      await t.http().post('/api/v1/professionals/me').set(bearer(user.accessToken)).expect(201);
+      await t.connection
+        .collection('professionals')
+        .updateOne(
+          { userId: new Types.ObjectId(user.userId) },
+          { $set: { skills: [{ skillId: new Types.ObjectId(skillId), proficiency: 'EXPERT', years: 5 }] } },
+        );
+      const blocked = await t
+        .http()
+        .delete(`/api/v1/admin/skills/${skillId}`)
+        .set(bearer(superToken))
+        .expect(422);
+      expect(blocked.body.error.code).toBe('SKILL_IN_USE');
+
+      // Non-admins cannot delete.
+      await t.http().delete(`/api/v1/admin/skills/${skillId}`).set(bearer(user.accessToken)).expect(403);
+    });
+
+    it('deletes unused categories and refuses ones still in use (FR-CAT-04)', async () => {
+      const parent = await t
+        .http()
+        .post('/api/v1/admin/categories')
+        .set(bearer(superToken))
+        .send({ name: 'Landscaping' })
+        .expect(201);
+      const child = await t
+        .http()
+        .post('/api/v1/admin/categories')
+        .set(bearer(superToken))
+        .send({ name: 'Lawn care', parentId: parent.body.data.id })
+        .expect(201);
+
+      // A parent with sub-categories is in use.
+      const blocked = await t
+        .http()
+        .delete(`/api/v1/admin/categories/${parent.body.data.id}`)
+        .set(bearer(superToken))
+        .expect(422);
+      expect(blocked.body.error.code).toBe('CATEGORY_IN_USE');
+
+      // A category linked to a skill is in use.
+      const skill = await t
+        .http()
+        .post('/api/v1/admin/skills')
+        .set(bearer(superToken))
+        .send({ code: 'GARDENER', name: 'Gardener', categoryIds: [child.body.data.id] })
+        .expect(201);
+      await t
+        .http()
+        .delete(`/api/v1/admin/categories/${child.body.data.id}`)
+        .set(bearer(superToken))
+        .expect(422);
+      await t
+        .http()
+        .patch(`/api/v1/admin/skills/${skill.body.data.id}`)
+        .set(bearer(superToken))
+        .send({ categoryIds: [parent.body.data.id] })
+        .expect(200);
+
+      // Leaf with no references: deleted, then gone.
+      await t
+        .http()
+        .delete(`/api/v1/admin/categories/${child.body.data.id}`)
+        .set(bearer(superToken))
+        .expect(200);
+      await t
+        .http()
+        .delete(`/api/v1/admin/categories/${child.body.data.id}`)
+        .set(bearer(superToken))
+        .expect(404);
+
+      // 'Electrical' (created in beforeAll) still has the ELECTRICIAN skill, so it stays.
+      const electrical = (await t.http().get('/api/v1/public/categories').expect(200)).body.data.find(
+        (c: { slug: string }) => c.slug === 'electrical',
+      );
+      await t.http().delete(`/api/v1/admin/categories/${electrical.id}`).set(bearer(superToken)).expect(422);
+
+      // Non-admins cannot delete.
+      const user = await signUpViaOtp(t, t.agent(), { userType: 'PROFESSIONAL' });
+      await t
+        .http()
+        .delete(`/api/v1/admin/categories/${parent.body.data.id}`)
+        .set(bearer(user.accessToken))
+        .expect(403);
+    });
   });
 
   describe('document uploads', () => {
@@ -350,9 +475,16 @@ describe('Phase 3: catalogue, documents, provider onboarding and registration pa
           .subarray(0, 4)
           .toString('latin1'),
       ).toBe('\x89PNG');
+      // Displayed in the browser tab rather than saved to the device.
+      expect(file.headers['content-disposition']).toMatch(/^inline; filename=/);
       await t
         .http()
         .get(url.body.data.url.replace(/sig=[a-f0-9]+/, 'sig=00'))
+        .expect(403);
+      // The disposition is covered by the signature.
+      await t
+        .http()
+        .get(url.body.data.url.replace(/&inline=1/, ''))
         .expect(403);
     });
   });
