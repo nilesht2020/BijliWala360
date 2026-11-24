@@ -90,7 +90,7 @@ export function verifyTotp(
   return null;
 }
 
-export function otpauthUrl(secretBase32: string, account: string, issuer = 'Bijli Wala'): string {
+export function otpauthUrl(secretBase32: string, account: string, issuer = 'BijliWala360'): string {
   const label = encodeURIComponent(`${issuer}:${account}`);
   const params = new URLSearchParams({
     secret: secretBase32,

@@ -87,7 +87,7 @@ export class OtpService {
     try {
       await this.sms.send({
         to: mobile,
-        body: `${code} is your Bijli Wala verification code. It expires in ${Math.round(ttl / 60)} minutes. Do not share it with anyone.`,
+        body: `${code} is your BijliWala360 verification code. It expires in ${Math.round(ttl / 60)} minutes. Do not share it with anyone.`,
       });
     } catch (err) {
       await this.challenges.deleteOne({ _id: challenge._id });

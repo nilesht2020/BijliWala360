@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
-import { LogOut, Menu, X, Zap } from 'lucide-react';
-import { APP_NAME, APP_TAGLINE, type Permission } from '@bijliwala/contracts';
+import { LogOut, Menu, X } from 'lucide-react';
+import { APP_NAME, APP_TAGLINE, APP_WORDMARK, type Permission } from '@bijliwala/contracts';
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/app/auth';
@@ -22,6 +22,27 @@ function useVisibleNav(items: NavItem[]): NavItem[] {
   return items.filter((i) => !i.permission || can(i.permission));
 }
 
+/**
+ * Brand mark: the yellow bolt inside a circular "360°" arrow on a navy tile. Same drawing as
+ * public/favicon.svg, so keep the two in sync.
+ */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={cn('size-8 shrink-0', className)} aria-hidden>
+      <rect width="32" height="32" rx="8" className="fill-primary" />
+      <path
+        d="M24.2 10.5A10 10 0 1 0 26 16"
+        fill="none"
+        className="stroke-bolt"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path d="m26.6 7.6-.4 4.6-4.5-1.1z" className="fill-bolt" />
+      <path d="M17.6 7.5 11 17h4.3l-1 7.5L21 15h-4.4z" className="fill-bolt" />
+    </svg>
+  );
+}
+
 export function Logo({ className }: { className?: string }) {
   return (
     <Link
@@ -29,10 +50,11 @@ export function Logo({ className }: { className?: string }) {
       className={cn('flex items-center gap-2 font-bold tracking-tight', className)}
       aria-label={`${APP_NAME} home`}
     >
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-bolt">
-        <Zap className="size-5 fill-current" aria-hidden />
+      <BrandMark />
+      <span className="text-lg">
+        {APP_WORDMARK.base}
+        <span className="text-accent-foreground">{APP_WORDMARK.accent}</span>
       </span>
-      <span className="text-lg">{APP_NAME}</span>
     </Link>
   );
 }

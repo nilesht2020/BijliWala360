@@ -95,7 +95,7 @@ function RegisterCompany() {
       <CardHeader>
         <CardTitle>Register your company</CardTitle>
         <CardDescription>
-          You can raise enquiries straight away. Once Bijli Wala verifies your company, you can accept
+          You can raise enquiries straight away. Once BijliWala360 verifies your company, you can accept
           quotations and start jobs.
         </CardDescription>
       </CardHeader>
@@ -197,7 +197,7 @@ export function CompanyStatusBanner({ status, reason }: { status: string; reason
   return (
     <Alert tone={status === 'SUSPENDED' ? 'danger' : 'warning'} className="mb-4">
       {status === 'SUSPENDED'
-        ? `Your company account is suspended${reason ? `: ${reason}` : ''}. Contact Bijli Wala support.`
+        ? `Your company account is suspended${reason ? `: ${reason}` : ''}. Contact BijliWala360 support.`
         : 'Your company is waiting for verification. You can raise enquiries now; quotations can be accepted once you are verified.'}
     </Alert>
   );
@@ -441,7 +441,7 @@ export function SitesPage() {
     <>
       <PageHeader
         title="Sites"
-        description="Locations where Bijli Wala people work for you."
+        description="Locations where BijliWala360 people work for you."
         actions={
           canManage && (
             <Button
@@ -534,7 +534,7 @@ export function TeamPage() {
     <>
       <PageHeader
         title="Team"
-        description="People from your company who can use Bijli Wala."
+        description="People from your company who can use BijliWala360."
         actions={
           <Button onClick={() => setOpen(true)}>
             <UserPlus aria-hidden /> Add member
@@ -666,7 +666,7 @@ export function TeamPage() {
         open={!!removing}
         onOpenChange={(o) => !o && setRemoving(null)}
         title={`Remove ${removing?.name ?? ''}?`}
-        description="They will lose access to your company on Bijli Wala."
+        description="They will lose access to your company on BijliWala360."
         confirmLabel="Remove"
         destructive
         onConfirm={async () => {
@@ -886,7 +886,7 @@ export function QuotationsPage() {
   const list = useCompanyQuotations({ page, pageSize, status: filters.status });
   return (
     <>
-      <PageHeader title="Quotations" description="Review and accept quotations from Bijli Wala." />
+      <PageHeader title="Quotations" description="Review and accept quotations from BijliWala360." />
       <DataTable
         columns={quotationColumns}
         data={list.data?.items}

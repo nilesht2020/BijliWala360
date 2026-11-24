@@ -158,7 +158,7 @@ export class PersonsService {
         throw Object.assign(
           new DomainError(
             'PERSON_ALREADY_ACTIVE',
-            'This person is already registered on Bijli Wala with another active profile.',
+            'This person is already registered on BijliWala360 with another active profile.',
           ),
           {
             conflict: {
@@ -210,7 +210,7 @@ export class PersonsService {
       if ((err as { code?: number }).code === 11000) {
         throw new DomainError(
           'PERSON_ALREADY_ACTIVE',
-          'This person is already registered on Bijli Wala with another active profile.',
+          'This person is already registered on BijliWala360 with another active profile.',
         );
       }
       throw err;

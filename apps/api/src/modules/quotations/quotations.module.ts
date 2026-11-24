@@ -782,7 +782,7 @@ export class QuotationsService implements OnModuleInit {
     if (q.validUntil < todayIn())
       throw new DomainError(
         'QUOTATION_EXPIRED',
-        'This quotation has expired. Ask Bijli Wala for a revised quotation.',
+        'This quotation has expired. Ask BijliWala360 for a revised quotation.',
       );
     const company = await this.companies.requireActive(q.companyId);
     const site = await this.companies.requireActiveSite(company._id, q.siteId.toHexString());

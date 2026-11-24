@@ -293,7 +293,7 @@ export class CompaniesService implements OnModuleInit {
         'COMPANY_NOT_ACTIVE',
         c.status === 'SUSPENDED'
           ? 'This company account is suspended.'
-          : 'This company is waiting for verification by Bijli Wala.',
+          : 'This company is waiting for verification by BijliWala360.',
       );
     return c;
   }
@@ -440,7 +440,7 @@ export class CompaniesService implements OnModuleInit {
     )
       throw new DomainError(
         'STATE_CONFLICT',
-        'The legal name and GSTIN of a verified company can only be changed by Bijli Wala support.',
+        'The legal name and GSTIN of a verified company can only be changed by BijliWala360 support.',
       );
     const billingState = input.billingAddress?.stateCode ?? c.billingAddress.stateCode;
     const gstin = input.gstin ?? c.gstin;

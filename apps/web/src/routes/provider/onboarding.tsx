@@ -1318,7 +1318,7 @@ export function OnboardingPage() {
     <>
       <PageHeader
         title="Registration"
-        description="Get verified to start receiving work through Bijli Wala."
+        description="Get verified to start receiving work through BijliWala360."
       />
       {user?.userType === 'VENDOR' ? <VendorOnboarding /> : <ProfessionalOnboarding />}
     </>

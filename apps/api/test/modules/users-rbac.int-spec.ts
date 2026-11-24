@@ -60,7 +60,7 @@ describe('Users & RBAC (FR-USR-01..06)', () => {
     });
     expect(res.body.data.assignments).toHaveLength(2);
     const mail = emailOutbox(t.app).sent.find((m) => m.to === email);
-    expect(mail?.subject).toBe('Set up your Bijli Wala admin account');
+    expect(mail?.subject).toBe('Set up your BijliWala360 admin account');
 
     const dup = await t
       .http()

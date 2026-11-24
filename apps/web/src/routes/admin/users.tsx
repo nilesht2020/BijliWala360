@@ -103,7 +103,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="Everyone with access to Bijli Wala: administrators, companies and providers."
+        description="Everyone with access to BijliWala360: administrators, companies and providers."
         actions={
           canManage && (
             <Button onClick={() => setCreating(true)}>
