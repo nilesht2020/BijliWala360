@@ -2,7 +2,7 @@
   "name": "@bijliwala/api",
   "version": "0.1.0",
   "private": true,
-  "description": "Bijli Wala backend: NestJS modular monolith (api + worker processes)",
+  "description": "BijliWala360 backend: NestJS modular monolith (api + worker processes)",
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",

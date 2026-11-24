@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /*
- * Bijli Wala design tokens (ARCHITECTURE §8.3). "Electric" palette: deep power-line navy as the
+ * BijliWala360 design tokens (ARCHITECTURE §8.3). "Electric" palette: deep power-line navy as the
  * primary (buttons, links, active nav), electric yellow ("bolt") for the logo, highlights and focus
  * rings, on clean white / cool-grey surfaces. Yellow is never used for body text on white (too
  * little contrast); it sits behind or beside navy text instead. HSL triplets for tailwind.config.ts.

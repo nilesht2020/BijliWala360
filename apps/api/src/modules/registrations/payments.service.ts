@@ -192,7 +192,7 @@ export class RegistrationPaymentsService implements OnModuleInit {
         orderId,
         amount: due.amountPaise,
         currency: 'INR',
-        name: 'Bijli Wala',
+        name: 'BijliWala360',
         description: `${reg.planSnapshot?.name ?? 'Registration'} fee`,
       },
     };

@@ -134,7 +134,7 @@ export function renderQuotationPdf({
     terms.push(
       `${m.label}: ${m.pct}% ${DUE[m.due] ?? ''}${m.due === 'DATE' && m.dueDate ? ` ${m.dueDate}` : ''}.`,
     );
-  if (terms.length === 0) terms.push('As per the credit period agreed with Bijli Wala.');
+  if (terms.length === 0) terms.push('As per the credit period agreed with BijliWala360.');
   for (const t of terms) pdf.paragraph(`-  ${t}`, 9.5);
 
   if (q.terms.trim()) {
@@ -144,7 +144,7 @@ export function renderQuotationPdf({
 
   pdf.gap(14);
   pdf.paragraph(
-    'This quotation is generated electronically. Accept or reject it in the Bijli Wala company portal. ' +
+    'This quotation is generated electronically. Accept or reject it in the BijliWala360 company portal. ' +
       'Amounts are in Indian Rupees; GST is charged as shown above.',
     8,
   );

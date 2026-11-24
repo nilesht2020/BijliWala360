@@ -1,7 +1,7 @@
 <<<<<<< HEAD
-# Bijli Wala
+# BijliWala360
 
-Pan-India technical manpower supply, workforce management and advertising platform. Bijli Wala
+Pan-India technical manpower supply, workforce management and advertising platform. BijliWala360
 registers and verifies electricians, plumbers, HVAC technicians, engineers and other technical staff,
 supplies them to client organisations through quotation, work order and **admin-controlled allocation**,
 manages attendance, payroll, billing and payments, and sells dynamic ad placements to industrial brands.

@@ -66,7 +66,7 @@ export const envSchema = z.object({
   WHATSAPP_PROVIDER: z.enum(['console']).default('console'),
   EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
   SMTP_URL: z.string().optional(),
-  EMAIL_FROM: z.string().default('Bijli Wala <no-reply@bijliwala.local>'),
+  EMAIL_FROM: z.string().default('BijliWala360 <no-reply@bijliwala.local>'),
 
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),

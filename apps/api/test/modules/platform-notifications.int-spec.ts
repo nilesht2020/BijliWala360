@@ -149,14 +149,14 @@ describe('Platform: audit logs, settings, notifications', () => {
         (m) => m.to === user.mobile && m.body.startsWith('Welcome'),
       );
       expect(welcome).toEqual([
-        { to: user.mobile, body: 'Welcome to Bijli Wala, Meera. Sign in to complete your profile.' },
+        { to: user.mobile, body: 'Welcome to BijliWala360, Meera. Sign in to complete your profile.' },
       ]);
 
       const inbox = await t.http().get('/api/v1/notifications').set(bearer(user.accessToken)).expect(200);
       expect(inbox.body.data).toHaveLength(1);
       expect(inbox.body.data[0]).toMatchObject({
         eventType: 'account.created',
-        title: 'Welcome to Bijli Wala, Meera',
+        title: 'Welcome to BijliWala360, Meera',
         link: '/provider',
       });
 
@@ -329,7 +329,7 @@ describe('Platform: audit logs, settings, notifications', () => {
         .set(bearer(superToken))
         .send({ data: { name: 'Acme' } })
         .expect(200);
-      expect(preview.body.data.title).toBe('Welcome to Bijli Wala, Acme');
+      expect(preview.body.data.title).toBe('Welcome to BijliWala360, Acme');
 
       const dup = await t
         .http()

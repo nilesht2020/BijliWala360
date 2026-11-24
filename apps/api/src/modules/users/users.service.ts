@@ -400,7 +400,7 @@ export class UsersService {
     );
     const link = `${this.config.env.WEB_BASE_URL}/reset-password?token=${encodeURIComponent(token)}`;
     const subject =
-      kind === 'INVITE' ? 'Set up your Bijli Wala admin account' : 'Reset your Bijli Wala password';
+      kind === 'INVITE' ? 'Set up your BijliWala360 admin account' : 'Reset your BijliWala360 password';
     const intro =
       kind === 'INVITE'
         ? `Hello ${user.name}, an administrator account has been created for you.`
