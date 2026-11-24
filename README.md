@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Bijli Wala
 
 Pan-India technical manpower supply, workforce management and advertising platform. Bijli Wala
@@ -98,3 +99,7 @@ pnpm --filter @bijliwala/web test
 - Multi-document and financial writes go through `TransactionRunner`; side effects go through the outbox.
 - Mutations that move money or allocate people require an `Idempotency-Key` header.
 
+=======
+# BijliWala360
+BijliWala360 website 
+>>>>>>> 105fd7d857e06c6f37c614dc4ab1f105e1281b8d
