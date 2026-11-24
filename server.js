@@ -49,7 +49,8 @@ async function start() {
       express.static(webDist, {
         index: false,
         setHeaders: (res, file) => {
-          if (file.includes(`${join('dist', 'assets')}`)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          if (file.includes(`${join('dist', 'assets')}`))
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         },
       }),
     );
