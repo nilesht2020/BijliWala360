@@ -10,6 +10,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "start": "node server.js",
+    "postinstall": "node -e \"if (process.env.BUILD_ON_INSTALL === 'true') require('child_process').execSync('pnpm build', { stdio: 'inherit' })\"",
     "build:contracts": "pnpm --filter @bijliwala/contracts run build",
     "dev:api": "pnpm --filter @bijliwala/api run start:dev",
     "dev:worker": "pnpm --filter @bijliwala/api run start:worker:dev",
