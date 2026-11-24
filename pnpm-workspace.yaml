@@ -1,3 +1,24 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
+
+# Dependencies allowed to run install scripts. Both spellings are kept so the repo installs with
+# pnpm 10 (onlyBuiltDependencies, the pinned version) and pnpm 11 (allowBuilds, used by some hosts
+# such as Hostinger). pnpm 11 no longer reads the "pnpm" field in package.json.
+onlyBuiltDependencies:
+  - mongodb-memory-server
+  - '@nestjs/core'
+  - esbuild
+  - msgpackr-extract
+
+allowBuilds:
+  mongodb-memory-server: true
+  '@nestjs/core': true
+  esbuild: true
+  msgpackr-extract: true
+  '@scarf/scarf': false
+  msw: false
+  nestjs-pino: false
+
+# Hosting platforms may run a newer pnpm than "packageManager" pins; warn instead of failing.
+pmOnFail: warn
