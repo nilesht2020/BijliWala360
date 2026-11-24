@@ -17,6 +17,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: 5.1.0
         version: 5.1.0(eslint@9.39.0(jiti@1.21.7))
+      mongodb:
+        specifier: ^6.0.0
+        version: 6.22.0
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -35,6 +38,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.700.0
         version: 3.700.0
+      '@bijliwala/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nestjs/common':
         specifier: 11.1.6
         version: 11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -53,9 +59,6 @@ importers:
       '@nestjs/swagger':
         specifier: 11.2.0
         version: 11.2.0(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6)(reflect-metadata@0.2.2)
-      '@bijliwala/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       bullmq:
         specifier: 5.58.0
         version: 5.58.0
@@ -93,6 +96,9 @@ importers:
         specifier: 3.24.6
         version: 3.24.6(zod@3.25.76)
     devDependencies:
+      '@bijliwala/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@nestjs/cli':
         specifier: 11.0.10
         version: 11.0.10(@types/node@22.18.0)
@@ -102,9 +108,6 @@ importers:
       '@nestjs/testing':
         specifier: 11.1.6
         version: 11.1.6(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6)(@nestjs/platform-express@11.1.6)
-      '@bijliwala/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@types/cookie-parser':
         specifier: 1.4.9
         version: 1.4.9(@types/express@5.0.3)
@@ -150,6 +153,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@bijliwala/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@hookform/resolvers':
         specifier: 3.9.1
         version: 3.9.1(react-hook-form@7.54.2(react@18.3.1))
@@ -162,9 +168,6 @@ importers:
       '@radix-ui/react-slot':
         specifier: 1.1.1
         version: 1.1.1(@types/react@18.3.18)(react@18.3.1)
-      '@bijliwala/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       '@tanstack/react-query':
         specifier: 5.62.8
         version: 5.62.8(react@18.3.1)
