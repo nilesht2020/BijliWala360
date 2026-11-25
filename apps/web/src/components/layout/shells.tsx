@@ -60,31 +60,73 @@ export function Logo({ className }: { className?: string }) {
 }
 
 /** Public marketing layout. */
+const PUBLIC_LINKS = [
+  { to: '/request-a-quote', label: 'Hire Us' },
+  { to: '/become-a-provider', label: 'Register' },
+] as const;
+
 export function PublicLayout() {
   const { status } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
         <div className="container flex h-16 items-center justify-between gap-4">
           <Logo />
-          <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" className="hidden md:inline-flex">
-              <Link to="/request-a-quote">Hire Us</Link>
-            </Button>
-            <Button asChild variant="ghost" className="hidden sm:inline-flex">
-              <Link to="/become-a-provider">Register</Link>
-            </Button>
+          <nav className="flex items-center gap-2" aria-label="Main">
+            {PUBLIC_LINKS.map((link) => (
+              <Button key={link.to} asChild variant="ghost" className="hidden md:inline-flex">
+                <Link to={link.to}>{link.label}</Link>
+              </Button>
+            ))}
             {status === 'authenticated' ? (
               <Button asChild>
-                <Link to="/app">Dashboard</Link>
+                <Link to="/app" onClick={closeMenu}>
+                  Dashboard
+                </Link>
               </Button>
             ) : (
               <Button asChild>
-                <Link to="/login">Sign in</Link>
+                <Link to="/login" onClick={closeMenu}>
+                  Sign in
+                </Link>
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="public-mobile-menu"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </Button>
           </nav>
         </div>
+        {menuOpen && (
+          <nav id="public-mobile-menu" className="border-t bg-background md:hidden" aria-label="Mobile">
+            <div className="container flex flex-col gap-1 py-3">
+              {PUBLIC_LINKS.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMenu}
+                  className={({ isActive }) =>
+                    cn(
+                      'rounded-lg px-3 py-2.5 text-base font-medium text-foreground transition-colors hover:bg-muted',
+                      isActive && 'bg-accent text-primary',
+                    )
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
+        )}
       </header>
       <main className="flex-1">
         <Outlet />
